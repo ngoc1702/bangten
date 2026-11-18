@@ -1,0 +1,28 @@
+{
+  "generator": "Built-in image_gen",
+  "purpose": "AI illustration assets for explicitly labeled sample homepage reviews",
+  "saved_assets": {
+    "scene": "C:/laragon/www/dogo/wp-content/uploads/2026/11/buulien-review-scene-ai.webp",
+    "avatar_01": "C:/laragon/www/dogo/wp-content/uploads/2026/11/buulien-review-avatar-01-ai.webp",
+    "avatar_02": "C:/laragon/www/dogo/wp-content/uploads/2026/11/buulien-review-avatar-02-ai.webp",
+    "avatar_03": "C:/laragon/www/dogo/wp-content/uploads/2026/11/buulien-review-avatar-03-ai.webp"
+  },
+  "prompts": [
+    {
+      "key": "review_scene",
+      "prompt": "Use case: photorealistic-natural. Asset type: a premium Vietnamese carved wood and Buddhist altar shop website testimonial illustration, portrait aspect ratio 4:5. Create one beautiful editorial photograph of a fictional Vietnamese couple in their early forties thoughtfully admiring a finely carved wooden lotus ornament in a tasteful traditional wood showroom, with a serene walnut altar and subtle Buddhist statuary softly out of focus behind them. The woman wears a simple elegant ivory linen blouse, the man a muted taupe shirt. Natural relaxed smiles, candid respectful interaction, realistic skin and anatomy, craftsmanship and wood grain in focus, warm window light, cinematic editorial quality, understated luxury. Palette: warm walnut brown, cream, antique gold and subtle deep burgundy #750308 accents. Compose the people in the middle and lower two thirds, atmospheric softly blurred upper background. No graphics, no border frame, no writing, no logos, no watermark. These are fictional AI-generated people for an illustration, not identifiable real customers."
+    },
+    {
+      "key": "review_avatar_01",
+      "prompt": "Use case: photorealistic-natural. Asset type: square portrait avatar for an explicitly labeled fictional sample testimonial on a Vietnamese traditional wood and Buddhist altar craft website. One fictional Vietnamese woman about 40, kind relaxed expression, natural modest smile, dark shoulder length hair, ivory linen blouse, authentic skin texture, soft warm daylight, blurred warm walnut interior, tasteful editorial portrait, head and shoulders centered with generous safe margins for a circular crop, natural photographic realism. Color palette cream, warm brown and muted burgundy. No text, no watermark, no logo. A newly invented person, not an existing real customer."
+    },
+    {
+      "key": "review_avatar_02",
+      "prompt": "Use case: photorealistic-natural. Asset type: square portrait avatar for an explicitly labeled fictional sample testimonial on a Vietnamese traditional wood and Buddhist altar craft website. One fictional Vietnamese man about 48, calm approachable expression and gentle smile, short tidy black hair with a little grey, light beige collared shirt, realistic natural skin, soft warm window light, blurred walnut wood showroom background, head and shoulders centered with generous safe margins for a circular crop, premium editorial portrait photography. Warm brown, cream and antique gold atmosphere. No text, no watermark, no logo. A newly invented person, not an existing real customer."
+    },
+    {
+      "key": "review_avatar_03",
+      "prompt": "Use case: photorealistic-natural. Asset type: square portrait avatar for an explicitly labeled fictional sample testimonial on a Vietnamese traditional wood and Buddhist altar craft website. One fictional Vietnamese woman about 55, warm gentle smile, dark hair neatly tied back, muted brown linen blouse, natural age appropriate facial lines and authentic skin texture, softly lit cream and walnut home interior blurred behind, head and shoulders centered with generous safe margins for a circular crop, elegant natural editorial portrait photography. Warm muted palette, no text, no watermark, no logos. A newly invented person, not an existing real customer."
+    }
+  ]
+}

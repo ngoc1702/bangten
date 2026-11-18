@@ -1,0 +1,94 @@
+/* Only below-the-fold items are hidden by JavaScript; the initial viewport stays visible. */
+[data-reveal] {
+  transition:
+    opacity 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+    translate 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  transition-delay: var(--reveal-delay, 0ms);
+}
+
+[data-reveal].is-reveal-pending {
+  opacity: 0;
+  visibility: hidden;
+  translate: 0 24px;
+  will-change: opacity, translate;
+}
+
+[data-reveal="fade-left"].is-reveal-pending {
+  translate: 24px 0;
+}
+
+[data-reveal="fade-right"].is-reveal-pending {
+  translate: -24px 0;
+}
+
+[data-reveal].is-revealed {
+  opacity: 1;
+  visibility: visible;
+  translate: 0 0;
+  /* width:100% !important; */
+}
+
+.production-workshops__content[data-reveal] .textwidget > p {
+  transition:
+    opacity 0.55s ease,
+    translate 0.55s ease;
+}
+
+.production-workshops__content[data-reveal].is-reveal-pending .textwidget > p {
+  opacity: 0;
+  translate: 0 14px;
+}
+
+.production-workshops__content[data-reveal].is-revealed .textwidget > p {
+  opacity: 1;
+  translate: 0 0;
+}
+
+.production-workshops__content[data-reveal].is-reveal-pending .textwidget > p:nth-child(1),
+.production-workshops__content[data-reveal].is-reveal-pending .textwidget > p:nth-child(2) {
+  transition-delay: 80ms;
+}
+
+.production-workshops__content[data-reveal].is-reveal-pending .textwidget > p:nth-child(3),
+.production-workshops__content[data-reveal].is-reveal-pending .textwidget > p:nth-child(4) {
+  transition-delay: 130ms;
+}
+
+.production-workshops__content[data-reveal].is-reveal-pending .textwidget > p:nth-child(5),
+.production-workshops__content[data-reveal].is-reveal-pending .textwidget > p:nth-child(6) {
+  transition-delay: 180ms;
+}
+
+.production-workshops__content[data-reveal].is-reveal-pending .textwidget > p:nth-child(7),
+.production-workshops__content[data-reveal].is-reveal-pending .textwidget > p:nth-child(8) {
+  transition-delay: 230ms;
+}
+
+.production-workshops__content[data-reveal].is-reveal-pending .textwidget > p:nth-child(n + 9) {
+  transition-delay: 280ms;
+}
+
+@media (max-width: 767px) {
+  [data-reveal].is-reveal-pending {
+    translate: 0 20px;
+  }
+
+  [data-reveal].is-revealed {
+    translate: 0 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-reveal] {
+    opacity: 1;
+    visibility: visible;
+    translate: none;
+    transition: none;
+  }
+
+  .production-workshops__content[data-reveal] .textwidget > p {
+    opacity: 1;
+    translate: none;
+    transition: none;
+  }
+}

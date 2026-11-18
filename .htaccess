@@ -1,0 +1,27 @@
+
+# BEGIN Local development asset cache
+<IfModule mod_setenvif.c>
+SetEnvIf Host "^(localhost|.*\.test)(:[0-9]+)?$" local_development
+</IfModule>
+<IfModule mod_headers.c>
+<FilesMatch "\.(css|js)$">
+Header always set Cache-Control "no-store, no-cache, must-revalidate, max-age=0" env=local_development
+Header always set Pragma "no-cache" env=local_development
+Header always set Expires "0" env=local_development
+</FilesMatch>
+</IfModule>
+# END Local development asset cache
+
+# BEGIN WordPress
+# Các nội dung nằm giữa "BEGIN WordPress" và "END WordPress" được tạo ra tự động, và chỉ nên được thay đổi thông qua các filter của WordPress. Mọi thay đổi tới thành phần này có thể sẽ bị mất và ghi đè.
+<IfModule mod_rewrite.c>
+RewriteEngine On
+RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+RewriteBase /
+RewriteRule ^index\.php$ - [L]
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule . /index.php [L]
+</IfModule>
+
+# END WordPress
