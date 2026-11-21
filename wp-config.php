@@ -20,7 +20,7 @@
 
 // ** Database settings - You can get this info from your web host ** //
 /** The name of the database for WordPress */ 
-define( 'DB_NAME', 'bangten' );
+define( 'DB_NAME', 'maynenkhi' );
 
 /** Database username */
 define( 'DB_USER', 'root' );
@@ -38,8 +38,10 @@ define( 'DB_CHARSET', 'utf8' );
 define( 'DB_COLLATE', '' );
 
 if ( !defined('WP_CLI') ) {
-    define( 'WP_SITEURL', $_SERVER['REQUEST_SCHEME'] . '://' . $_SERVER['HTTP_HOST'] );
-    define( 'WP_HOME',    $_SERVER['REQUEST_SCHEME'] . '://' . $_SERVER['HTTP_HOST'] );
+    $local_host = preg_replace( '/:\d+$/', '', $_SERVER['HTTP_HOST'] );
+    $local_base_path = in_array( $local_host, array( 'localhost', '127.0.0.1' ), true ) ? '/maynenkhi' : '';
+    define( 'WP_SITEURL', $_SERVER['REQUEST_SCHEME'] . '://' . $_SERVER['HTTP_HOST'] . $local_base_path );
+    define( 'WP_HOME',    $_SERVER['REQUEST_SCHEME'] . '://' . $_SERVER['HTTP_HOST'] . $local_base_path );
 }
 
 
