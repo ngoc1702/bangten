@@ -47,7 +47,29 @@ function caia_register_home_page_fields() {
 					'instructions' => 'Để trống để tự hiển thị các danh mục cha, trừ Chưa phân loại. Ảnh lấy từ Sản phẩm → Danh mục → Hình thu nhỏ. Có thể chọn riêng các danh mục muốn hiển thị.',
 				),
 				array(
-					'key' => 'field_caia_home_tab_products', 'label' => '3. Sản phẩm theo danh mục', 'type' => 'tab', 'placement' => 'top',
+					'key' => 'field_caia_home_tab_stats', 'label' => '3. Con số nổi bật', 'type' => 'tab', 'placement' => 'top',
+				),
+				array(
+					'key' => 'field_caia_home_stats_enabled', 'name' => 'home_stats_enabled',
+					'label' => 'Hiển thị con số nổi bật', 'type' => 'true_false', 'ui' => 1, 'default_value' => 1,
+				),
+				array(
+					'key' => 'field_caia_home_stats_title', 'name' => 'home_stats_title',
+					'label' => 'Tiêu đề section', 'type' => 'text', 'default_value' => 'Những con số nổi bật',
+				),
+				array(
+					'key' => 'field_caia_home_stats_items', 'name' => 'home_stats_items',
+					'label' => 'Các con số', 'type' => 'repeater', 'layout' => 'table',
+					'button_label' => 'Thêm con số', 'max' => 6,
+					'instructions' => 'Kéo thả để đổi thứ tự. Icon nên là ảnh PNG/SVG nét mảnh, nền trong suốt, khoảng 64 × 64px. Để trống icon để dùng icon mặc định.',
+					'sub_fields' => array(
+						array( 'key' => 'field_caia_home_stat_icon', 'name' => 'icon', 'label' => 'Icon', 'type' => 'image', 'return_format' => 'id', 'preview_size' => 'thumbnail', 'mime_types' => 'png,svg,webp', 'wrapper' => array( 'width' => 20 ) ),
+						array( 'key' => 'field_caia_home_stat_number', 'name' => 'number', 'label' => 'Con số', 'type' => 'text', 'required' => 1, 'placeholder' => '20+', 'wrapper' => array( 'width' => 30 ) ),
+						array( 'key' => 'field_caia_home_stat_label', 'name' => 'label', 'label' => 'Mô tả', 'type' => 'text', 'required' => 1, 'placeholder' => 'Năm kinh nghiệm', 'wrapper' => array( 'width' => 50 ) ),
+					),
+				),
+				array(
+					'key' => 'field_caia_home_tab_products', 'label' => '4. Sản phẩm theo danh mục', 'type' => 'tab', 'placement' => 'top',
 				),
 				array(
 					'key' => 'field_caia_home_product_sections', 'name' => 'home_product_sections',
@@ -74,7 +96,7 @@ function caia_register_home_page_fields() {
 					),
 				),
 				array(
-					'key' => 'field_caia_home_tab_news', 'label' => '4. Tin tức nổi bật', 'type' => 'tab', 'placement' => 'top',
+					'key' => 'field_caia_home_tab_news', 'label' => '5. Tin tức nổi bật', 'type' => 'tab', 'placement' => 'top',
 				),
 				array(
 					'key'           => 'field_caia_home_news_enabled',
@@ -89,7 +111,7 @@ function caia_register_home_page_fields() {
 					'label'         => 'Tiêu đề section',
 					'name'          => 'home_news_title',
 					'type'          => 'text',
-					'default_value' => 'Kiến thức Phật giáo và Thờ cúng',
+					'default_value' => 'Tin tức & kiến thức khí nén',
 				),
 				array(
 					'key'           => 'field_caia_home_news_description',
@@ -97,7 +119,7 @@ function caia_register_home_page_fields() {
 					'name'          => 'home_news_description',
 					'type'          => 'textarea',
 					'rows'          => 2,
-					'default_value' => 'Chia sẻ kiến thức và những thông tin hữu ích về Phật giáo, văn hóa thờ cúng và không gian thờ phụng.',
+					'default_value' => 'Cập nhật tin tức, kinh nghiệm chọn mua, vận hành và bảo dưỡng máy nén khí cho nhà xưởng, nhà máy.',
 				),
 				array(
 					'key'           => 'field_caia_home_news_posts',
@@ -120,7 +142,7 @@ function caia_register_home_page_fields() {
 					'instructions'  => 'Chọn đường dẫn và nhập chữ trên nút. Để trống để dùng trang Blog với nhãn “Xem tất cả bài viết”.',
 				),
 				array(
-					'key' => 'field_caia_home_tab_reviews', 'label' => '5. Đánh giá khách hàng', 'type' => 'tab', 'placement' => 'top',
+					'key' => 'field_caia_home_tab_reviews', 'label' => '6. Đánh giá khách hàng', 'type' => 'tab', 'placement' => 'top',
 				),
 				...caia_home_review_fields(),
 			),
@@ -147,12 +169,12 @@ function caia_home_review_fields() {
 		),
 		array(
 			'key' => 'field_caia_home_reviews_title', 'name' => 'home_reviews_title',
-			'label' => 'Tiêu đề section', 'type' => 'text', 'default_value' => 'Khách hàng nói về Bửu Liên',
+			'label' => 'Tiêu đề section', 'type' => 'text', 'default_value' => 'Khách hàng nói về Thọ Lập',
 		),
 		array(
 			'key' => 'field_caia_home_reviews_intro', 'name' => 'home_reviews_intro',
 			'label' => 'Mô tả section', 'type' => 'textarea', 'rows' => 2,
-			'default_value' => 'Những cảm nhận về nét chạm khắc, sắc gỗ và sự chỉn chu trong từng không gian thờ phụng.',
+			'default_value' => 'Phản hồi từ các nhà xưởng, nhà máy đã tin chọn giải pháp máy nén khí của Thọ Lập Hưng Yên.',
 		),
 		array(
 			'key' => 'field_caia_home_reviews_visual_type', 'name' => 'home_reviews_visual_type',
@@ -290,15 +312,56 @@ function caia_render_home_categories( $page_id ) {
 					?>
 					<li class="home-categories__item">
 						<a class="home-categories__link" href="<?php echo esc_url( $url ); ?>">
-							<span class="home-categories__circle">
+							<span class="home-categories__content">
+								<span class="home-categories__name"><?php echo esc_html( $term->name ); ?></span>
+								<span class="home-categories__more" aria-hidden="true">Xem thêm +</span>
+							</span>
+							<span class="home-categories__media">
 								<?php if ( $image_id && wp_attachment_is_image( $image_id ) ) : ?>
-									<?php echo wp_get_attachment_image( $image_id, 'woocommerce_thumbnail', false, array( 'class' => 'home-categories__image', 'alt' => '', 'loading' => 'lazy', 'sizes' => '120px' ) ); ?>
+									<?php echo wp_get_attachment_image( $image_id, 'medium_large', false, array( 'class' => 'home-categories__image', 'alt' => '', 'loading' => 'lazy', 'sizes' => '(max-width: 599px) 50vw, 240px' ) ); ?>
 								<?php else : ?>
 									<i class="fa-solid fa-box-open" aria-hidden="true"></i>
 								<?php endif; ?>
 							</span>
-							<span class="home-categories__name"><?php echo esc_html( $term->name ); ?></span>
 						</a>
+					</li>
+				<?php endforeach; ?>
+			</ul>
+		</div>
+	</section>
+	<?php
+}
+
+function caia_render_home_stats( $page_id ) {
+	if ( ! function_exists( 'get_field' ) || get_field( 'field_caia_home_stats_enabled', $page_id ) === false ) {
+		return;
+	}
+	$items = array_values( array_filter( (array) get_field( 'field_caia_home_stats_items', $page_id ), function( $item ) {
+		return is_array( $item ) && trim( (string) ( $item['number'] ?? '' ) ) !== '';
+	} ) );
+	if ( ! $items ) {
+		return;
+	}
+	$title         = trim( (string) get_field( 'field_caia_home_stats_title', $page_id ) ) ?: 'Những con số nổi bật';
+	$default_icons = array( 'fa-screwdriver-wrench', 'fa-hands-holding-circle', 'fa-gears', 'fa-truck-fast', 'fa-award', 'fa-headset' );
+	?>
+	<section class="home-stats" aria-labelledby="home-stats-title">
+		<div class="wrap">
+			<h2 id="home-stats-title" class="home-stats__heading"><?php echo esc_html( $title ); ?></h2>
+			<ul class="home-stats__grid" role="list" style="--home-stats-count: <?php echo count( $items ); ?>">
+				<?php foreach ( $items as $index => $item ) :
+					$icon_id = absint( $item['icon'] ?? 0 );
+					?>
+					<li class="home-stats__item">
+						<span class="home-stats__icon" aria-hidden="true">
+							<?php if ( $icon_id && wp_attachment_is_image( $icon_id ) ) : ?>
+								<?php echo wp_get_attachment_image( $icon_id, 'thumbnail', false, array( 'alt' => '', 'loading' => 'lazy' ) ); ?>
+							<?php else : ?>
+								<i class="fa-solid <?php echo esc_attr( $default_icons[ $index % count( $default_icons ) ] ); ?>"></i>
+							<?php endif; ?>
+						</span>
+						<strong class="home-stats__number"><?php echo esc_html( $item['number'] ); ?></strong>
+						<span class="home-stats__label"><?php echo esc_html( $item['label'] ?? '' ); ?></span>
 					</li>
 				<?php endforeach; ?>
 			</ul>
@@ -377,7 +440,7 @@ function caia_render_home_product_sections( $page_id ) {
 							</div>
 					</div>
 				<?php endforeach; ?>
-				<div class="home-products__footer"><a class="home-products__button" href="<?php echo esc_url( $tabs[0]['url'] ); ?>" aria-label="<?php echo esc_attr( 'Xem tất cả tác phẩm trong ' . $tabs[0]['term']->name ); ?>">Xem tất cả tác phẩm<i class="fa-solid fa-arrow-right home-products__button-icon" aria-hidden="true"></i></a></div>
+				<div class="home-products__footer"><a class="home-products__button" href="<?php echo esc_url( $tabs[0]['url'] ); ?>" aria-label="<?php echo esc_attr( 'Xem tất cả sản phẩm trong ' . $tabs[0]['term']->name ); ?>">Xem tất cả sản phẩm<i class="fa-solid fa-arrow-right home-products__button-icon" aria-hidden="true"></i></a></div>
 			</div>
 		</section>
 		<?php

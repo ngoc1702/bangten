@@ -13,61 +13,61 @@ include('product-page.php');
 include('product-category-page.php');
 include('product-catalog.php');
 
-// Use the full content area and a 16-product page on the shop archive.
-add_filter( 'genesis_site_layout', 'electrolux_shop_layout', 99 );
-function electrolux_shop_layout( $layout ) {
-	return function_exists( 'is_shop' ) && is_shop() ? 'full-width-content' : $layout;
+/**
+ * Site scripts: shared behaviour everywhere, slick only where the homepage sliders live.
+ * Both load in the footer so they never block rendering.
+ */
+add_action( 'wp_enqueue_scripts', 'caia_enqueue_site_scripts' );
+function caia_enqueue_site_scripts() {
+	$dir  = get_stylesheet_directory();
+	$url  = get_stylesheet_directory_uri();
+	$deps = array( 'jquery' );
+
+	if ( is_page_template( 'page-trangchu.php' ) ) {
+		wp_enqueue_script( 'caia-slick', $url . '/custom/js/slick.js', array( 'jquery' ), filemtime( $dir . '/custom/js/slick.js' ), true );
+		$deps[] = 'caia-slick';
+	}
+
+	wp_enqueue_script( 'caia-site', $url . '/assets/js/site.js', $deps, filemtime( $dir . '/assets/js/site.js' ), true );
 }
 
-add_filter( 'loop_shop_per_page', 'electrolux_shop_per_page', 99 );
-function electrolux_shop_per_page( $per_page ) {
-	return is_shop() ? 16 : $per_page;
+/** Re-register the child stylesheet with a file-time version so edits bust the cache. */
+add_action( 'wp_enqueue_scripts', 'caia_enqueue_child_style', 100 );
+function caia_enqueue_child_style() {
+	$path = get_stylesheet_directory() . '/style.css';
+	wp_dequeue_style( 'caia' );
+	wp_deregister_style( 'caia' );
+	wp_enqueue_style( 'caia', get_stylesheet_uri(), array(), filemtime( $path ) );
 }
 
-add_action( 'wp', 'electrolux_configure_shop_archive' );
-function electrolux_configure_shop_archive() {
-	if ( ! function_exists( 'is_shop' ) || ! is_shop() ) {
+/**
+ * The site has no cart or checkout: drop WooCommerce's cart scripts and block styles,
+ * and keep its stylesheets only on WooCommerce pages. Hover zoom is disabled, so skip its script too.
+ */
+// Runs at print time because WooCommerce enqueues some of these after wp_enqueue_scripts.
+add_action( 'wp_print_styles', 'caia_trim_woocommerce_assets', 100 );
+add_action( 'wp_print_scripts', 'caia_trim_woocommerce_assets', 100 );
+add_action( 'wp_print_footer_scripts', 'caia_trim_woocommerce_assets', 1 );
+function caia_trim_woocommerce_assets() {
+	if ( is_admin() || ! function_exists( 'is_woocommerce' ) ) {
 		return;
 	}
 
-	remove_action( 'woocommerce_after_shop_loop_item', 'woocommerce_template_loop_add_to_cart', 10 );
-	add_filter( 'body_class', function ( $classes ) {
-		$classes[] = 'electrolux-shop';
-		return $classes;
-	} );
-}
+	// Handles cover both older names and the wc- prefixed ones used since WooCommerce 9.
+	$scripts = array( 'wc-add-to-cart', 'wc-cart-fragments', 'zoom', 'wc-zoom' );
+	$styles  = array( 'wc-blocks-style' );
 
+	if ( ! ( is_woocommerce() || is_cart() || is_checkout() || is_account_page() ) ) {
+		$scripts = array_merge( $scripts, array( 'woocommerce', 'jquery-blockui', 'wc-jquery-blockui', 'js-cookie', 'wc-js-cookie', 'sourcebuster-js', 'wc-order-attribution' ) );
+		$styles  = array_merge( $styles, array( 'woocommerce-general', 'woocommerce-layout', 'woocommerce-smallscreen', 'woocommerce-inline' ) );
+	}
 
-// Thêm caiajs
-include('js/caiajs.php');
-
-// Thêm jquery
-add_action('wp_enqueue_scripts', 'caia_add_scripts_homes');
-function caia_add_scripts_homes(){
-	wp_enqueue_script('caia-slick', CHILD_URL.'/custom/js/slick.js', array('jquery'));
-}
-
-function add_swiper_webcomponent_script() {
-    echo '<script type="module">
-      import "https://cdn.jsdelivr.net/npm/swiper@11/swiper-element-bundle.min.js";
-    </script>';
-}
-add_action('wp_footer', 'add_swiper_webcomponent_script');
-
-
-add_action('wp_enqueue_scripts', 'custom_override_style', 100);
-function custom_override_style() {
-    // Đảm bảo đúng với theme con
-    $style_path = get_stylesheet_directory() . '/style.css';
-    $version = file_exists($style_path) ? filemtime($style_path) : time();
-
-    // Handle thực tế (cập nhật lại nếu bạn tìm thấy tên khác sau bước kiểm tra)
-    $handle = 'caia';
-
-    // Gỡ bỏ và thêm lại
-    wp_dequeue_style($handle);
-    wp_deregister_style($handle);
-    wp_enqueue_style($handle, get_stylesheet_uri(), array(), $version);
+	foreach ( $scripts as $handle ) {
+		wp_dequeue_script( $handle );
+	}
+	foreach ( $styles as $handle ) {
+		wp_dequeue_style( $handle );
+	}
 }
 
 add_action( 'wp_enqueue_scripts', 'caia_enqueue_home_page_style', 120 );
@@ -98,25 +98,6 @@ function caia_render_page_banner( $title, $image_id = 0 ) {
 	</header>
 	<?php
 }
-
-add_action( 'wp_enqueue_scripts', 'caia_enqueue_quotation_assets', 120 );
-function caia_enqueue_quotation_assets() {
-	if ( ! is_page_template( 'page-bao-gia.php' ) ) {
-		return;
-	}
-
-	$css_path = get_stylesheet_directory() . '/assets/css/bao-gia.css';
-
-	if ( file_exists( $css_path ) ) {
-		wp_enqueue_style(
-			'caia-bao-gia',
-			get_stylesheet_directory_uri() . '/assets/css/bao-gia.css',
-			array( 'caia' ),
-			filemtime( $css_path )
-		);
-	}
-}
-
 
 add_action( 'wp_enqueue_scripts', 'caia_enqueue_scroll_reveal_assets', 140 );
 /**
@@ -215,16 +196,14 @@ function caia_add_html_widget_title( $title ) {
 	return $title;
 }
 
-// Thêm font
-add_action('wp_head','caia_add_font_website');
-function caia_add_font_website(){
+
+/** Montserrat is the only web font in use; one variable request covers weights 300–800. */
+add_action( 'wp_head', 'caia_add_font_website', 1 );
+function caia_add_font_website() {
 	?>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin> n
-<link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
-<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&display=swap" rel="stylesheet">
-<link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
-<link href="https://fonts.googleapis.com/css2?family=Bai+Jamjuree:ital,wght@0,200;0,300;0,400;0,500;0,600;0,700;1,200;1,300;1,400;1,500;1,600;1,700&display=swap" rel="stylesheet">
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,300..800;1,400..600&display=swap" rel="stylesheet">
 	<?php
 }
 
@@ -386,22 +365,6 @@ add_action('genesis_footer','caia_add_content_footer');
 function caia_add_content_footer(){
 	if( is_active_sidebar( 'content-footer' ) ){
 		dynamic_sidebar( 'content-footer' );
-	}
-}
-
-add_action('genesis_before_footer','caia_add_content_after_footer',8);
-function caia_add_content_after_footer(){
-	echo '<div data-reveal="fade-up" class="content-contact section"><div class="wrap">';
-		dynamic_sidebar( 'Toàn bộ - Liên hệ tư vấn' );
-	echo '</div></div>';
-}
-
-add_action('genesis_before_footer','caia_add_content_cta',9);
-function caia_add_content_cta(){
-	if( is_active_sidebar( 'content-cta' ) ){
-		echo '<div class="content-cta section"><div class="wrap">';
-			dynamic_sidebar( 'content-cta' );
-		echo '</div></div>';
 	}
 }
 
@@ -619,10 +582,10 @@ function additional_fields (){
 
 // Lưu nội dung comment 
 add_action( 'comment_post', 'save_comment_meta_data' );
-function save_comment_meta_data( $comment_id ){
-	if ( ( isset( $_POST['phone'] ) ) && ( $_POST['phone'] != '') )
-	$phone = wp_filter_nohtml_kses($_POST['phone']);
-	add_comment_meta( $comment_id, 'phone', $phone );
+function save_comment_meta_data( $comment_id ) {
+	if ( ! empty( $_POST['phone'] ) ) {
+		add_comment_meta( $comment_id, 'phone', wp_filter_nohtml_kses( wp_unslash( $_POST['phone'] ) ) );
+	}
 }
 
 // Add the filter to check if the comment meta data has been filled or not
@@ -680,35 +643,12 @@ function myplugin_comment_column( $column, $comment_ID ){
 	}
 }
 
-add_action('admin_head', 'my_column_width');
+add_action( 'admin_head', 'my_column_width' );
 function my_column_width() {
-    echo '<style type="text/css">';
-    echo 'th#phone {width: 15%;}';
-    echo '</style>';
+	echo '<style>th#phone{width:15%}</style>';
 }
 
-
-
-
-
-
-
-// Mobile
-if (wp_is_mobile() ){
-	// remove_action( 'genesis_meta', 'genesis_load_stylesheet' );
-	// wp_enqueue_style( 'style-mobile', CHILD_URL.'/style-mobile.css' );
-
-}
-
-
+add_action( 'wp_enqueue_scripts', 'add_fontawesome_to_theme' );
 function add_fontawesome_to_theme() {
-    wp_enqueue_style(
-        'font-awesome', 
-        CHILD_URL . '/assets/fontawesome/css/all.min.css',
-        array(), 
-        '6.5.0'
-    );
+	wp_enqueue_style( 'font-awesome', CHILD_URL . '/assets/fontawesome/css/all.min.css', array(), '6.5.0' );
 }
-add_action('wp_enqueue_scripts', 'add_fontawesome_to_theme');
-
-

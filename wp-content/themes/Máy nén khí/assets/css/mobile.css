@@ -48,8 +48,8 @@
   }
 
   body.caia-header-layout .header-middle-widgets {
-    grid-template-columns: 48px minmax(0, 1fr) 44px;
-    gap: 8px 12px;
+    grid-template-columns: 48px minmax(0, 1fr) auto 34px;
+    gap: 8px 10px;
     padding: 6px 0 8px;
   }
   body.caia-header-layout .header-middle .widget_media_image,
@@ -96,6 +96,36 @@
     font-size: 14px;
   }
 
+  .home-stats {
+    padding: 40px 0;
+  }
+  .home-stats .home-stats__heading {
+    margin-bottom: 20px;
+    font-size: var(--mobile-heading-size);
+  }
+  .home-stats .home-stats__grid {
+    padding: 20px 0;
+    border-radius: 16px;
+    row-gap: 20px;
+  }
+  .home-stats .home-stats__item {
+    padding: 4px 10px;
+  }
+  .home-stats__icon {
+    width: 44px;
+    height: 44px;
+    margin-bottom: 8px;
+  }
+  .home-stats__icon > i {
+    font-size: 32px;
+  }
+  .home-stats .home-stats__number {
+    font-size: 28px;
+  }
+  .home-stats .home-stats__label {
+    font-size: 14px;
+  }
+
   .home-categories,
   .home-products,
   .home-news,
@@ -130,18 +160,23 @@
     margin-bottom: 20px;
   }
   .home-categories .home-categories__grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 22px 10px;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 16px;
   }
   .home-categories .home-categories__link {
-    gap: 10px;
+    gap: 12px;
+    min-height: 180px;
+    padding: 16px 12px 16px 20px;
   }
-  .home-categories__circle {
-    width: 88px;
-    padding: 14px;
+  .home-categories__content {
+    gap: 16px;
   }
-  .home-categories__name {
-    font-size: 13px;
+  .home-categories__media {
+    height: 140px;
+  }
+  .home-categories__name,
+  .home-categories__more {
+    font-size: 14px;
     line-height: 1.45;
   }
   .home-products__grid {
@@ -163,9 +198,15 @@
   .home-products .home-products__title {
     line-height: 1.5;
   }
-  .home-products__image-link {
-    margin-bottom: 8px;
-    border-radius: 8px;
+  .home-products__card {
+    border-radius: 10px;
+  }
+  .home-products__body {
+    gap: 8px;
+    padding: 10px 10px 12px;
+  }
+  .home-products .home-products__price {
+    font-size: 14px;
   }
   .home-news .home-news__title {
     font-size: 17px;
@@ -565,9 +606,6 @@
 }
 
 @media (max-width: 359px) {
-  .home-categories .home-categories__grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
   .nhantuvan .widget_text .widgettitle,
   .nhantuvan .textwidget :is(h1, h2, h3) {
     font-size: 21px;

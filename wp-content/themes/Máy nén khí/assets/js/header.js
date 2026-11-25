@@ -19,8 +19,8 @@
 
     // Keep the widget's search form, including its existing action and query name.
     header.querySelectorAll('input[type="search"]').forEach(input => {
-      input.placeholder = 'Nhập tác phẩm tìm kiếm';
-      input.setAttribute('aria-label', 'Tìm kiếm tác phẩm');
+      input.placeholder = 'Nhập sản phẩm tìm kiếm';
+      input.setAttribute('aria-label', 'Tìm kiếm sản phẩm');
     });
 
   };

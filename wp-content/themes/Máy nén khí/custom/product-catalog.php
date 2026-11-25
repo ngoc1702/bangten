@@ -1,5 +1,5 @@
 <?php
-/** Shared shop/category catalog with taxonomy filters and WooCommerce ordering. */
+/** Shared shop/category catalog with category + attribute checkbox filters and WooCommerce ordering. */
 if ( ! defined( 'ABSPATH' ) ) { exit; }
 
 function caia_is_product_catalog() {
@@ -42,17 +42,43 @@ function caia_catalog_selected_slugs( $key ) {
 	return array_values( array_unique( array_map( 'sanitize_title', array_filter( $values, 'is_string' ) ) ) );
 }
 
+/** WooCommerce attribute taxonomies, keyed by their URL parameter (filter_{slug}). */
+function caia_catalog_attribute_filters() {
+	$filters = array();
+	foreach ( wc_get_attribute_taxonomies() as $attribute ) {
+		$taxonomy = wc_attribute_taxonomy_name( $attribute->attribute_name );
+		if ( taxonomy_exists( $taxonomy ) ) {
+			$filters[ 'filter_' . $attribute->attribute_name ] = array( 'taxonomy' => $taxonomy, 'label' => $attribute->attribute_label );
+		}
+	}
+	return $filters;
+}
+
 function caia_catalog_state() {
-	$term = caia_get_product_category_for_current_page();
-	// On an archive, the URL determines the category. Filter parameters only narrow it.
-	if ( ! $term instanceof WP_Term && isset( $_GET['catalog_category'] ) && is_string( $_GET['catalog_category'] ) ) {
-		$selected = get_term_by( 'slug', sanitize_title( wp_unslash( $_GET['catalog_category'] ) ), 'product_cat' );
-		$term = $selected instanceof WP_Term ? $selected : null;
+	// Checked categories win; otherwise an archive URL selects its own category.
+	$categories = array();
+	foreach ( caia_catalog_selected_slugs( 'categories' ) as $slug ) {
+		$term = get_term_by( 'slug', $slug, 'product_cat' );
+		if ( $term instanceof WP_Term ) { $categories[] = $term; }
+	}
+	if ( ! isset( $_GET['categories'] ) ) {
+		$archive = caia_get_product_category_for_current_page();
+		if ( $archive instanceof WP_Term ) { $categories = array( $archive ); }
+	}
+	$attributes = array();
+	foreach ( caia_catalog_attribute_filters() as $key => $filter ) {
+		$attributes[ $key ] = caia_catalog_selected_slugs( $key );
 	}
 	$orderby = isset( $_GET['orderby'] ) && is_string( $_GET['orderby'] ) ? sanitize_key( wp_unslash( $_GET['orderby'] ) ) : get_option( 'woocommerce_default_catalog_orderby', 'menu_order' );
 	if ( ! isset( caia_catalog_order_options()[ $orderby ] ) ) { $orderby = 'menu_order'; }
 	$page = isset( $_GET['catalog_page'] ) && is_scalar( $_GET['catalog_page'] ) ? max( 1, absint( $_GET['catalog_page'] ) ) : max( 1, absint( get_query_var( 'paged' ) ) );
-	return array( 'term' => $term, 'materials' => caia_catalog_selected_slugs( 'materials' ), 'sizes' => caia_catalog_selected_slugs( 'sizes' ), 'orderby' => $orderby, 'page' => $page );
+	return array(
+		'categories' => $categories,
+		'term'       => count( $categories ) === 1 ? $categories[0] : null,
+		'attributes' => $attributes,
+		'orderby'    => $orderby,
+		'page'       => $page,
+	);
 }
 
 function caia_catalog_tax_query( $state, $ignore = '' ) {
@@ -60,18 +86,18 @@ function caia_catalog_tax_query( $state, $ignore = '' ) {
 	$visibility = wc_get_product_visibility_term_ids();
 	$excluded = array_filter( array( $visibility['exclude-from-catalog'] ?? 0, get_option( 'woocommerce_hide_out_of_stock_items' ) === 'yes' ? ( $visibility['outofstock'] ?? 0 ) : 0 ) );
 	if ( $excluded ) { $tax[] = array( 'taxonomy' => 'product_visibility', 'field' => 'term_taxonomy_id', 'terms' => $excluded, 'operator' => 'NOT IN' ); }
-	if ( $state['term'] instanceof WP_Term ) {
-		$tax[] = array( 'taxonomy' => 'product_cat', 'field' => 'term_id', 'terms' => array( $state['term']->term_id ), 'include_children' => true );
+	if ( $ignore !== 'categories' && $state['categories'] ) {
+		$tax[] = array( 'taxonomy' => 'product_cat', 'field' => 'term_id', 'terms' => wp_list_pluck( $state['categories'], 'term_id' ), 'include_children' => true, 'operator' => 'IN' );
 	}
-	foreach ( array( 'materials' => 'pa_chat-lieu', 'sizes' => 'pa_kich-thuoc' ) as $key => $taxonomy ) {
-		if ( $key !== $ignore && $state[ $key ] && taxonomy_exists( $taxonomy ) ) {
-			$tax[] = array( 'taxonomy' => $taxonomy, 'field' => 'slug', 'terms' => $state[ $key ], 'operator' => 'IN' );
+	foreach ( caia_catalog_attribute_filters() as $key => $filter ) {
+		if ( $key !== $ignore && ! empty( $state['attributes'][ $key ] ) ) {
+			$tax[] = array( 'taxonomy' => $filter['taxonomy'], 'field' => 'slug', 'terms' => $state['attributes'][ $key ], 'operator' => 'IN' );
 		}
 	}
 	return $tax;
 }
 
-/** Count each facet in the current category and other selected facets. */
+/** Count each facet within the other selected filters. */
 function caia_catalog_facet_counts( $taxonomy, $state, $ignore ) {
 	global $wpdb;
 	$tax_query = new WP_Tax_Query( caia_catalog_tax_query( $state, $ignore ) );
@@ -103,37 +129,108 @@ function caia_catalog_base_url() {
 	return wc_get_page_permalink( 'shop' );
 }
 
-function caia_catalog_category_options( $terms, $active, $parent = 0, $depth = 0 ) {
-	foreach ( $terms as $term ) {
-		if ( (int) $term->parent !== $parent ) { continue; }
-		$url = get_term_link( $term );
-		if ( is_wp_error( $url ) ) { continue; }
-		echo '<option value="' . esc_attr( $term->slug ) . '" data-url="' . esc_url( $url ) . '"' . selected( $active ? $active->term_id : 0, $term->term_id, false ) . '>' . esc_html( str_repeat( '— ', $depth ) . $term->name ) . '</option>';
-		caia_catalog_category_options( $terms, $active, $term->term_id, $depth + 1 );
-	}
+function caia_catalog_checkbox( $name, $term, $count, $chosen, $extra = '', $disable_empty = true ) {
+	$empty = ! $count && ! $chosen;
+	?>
+	<label class="catalog-filter-option<?php echo $empty ? ' is-unavailable' : ''; ?><?php echo $chosen ? ' is-checked' : ''; ?>">
+		<input type="checkbox" name="<?php echo esc_attr( $name ); ?>[]" value="<?php echo esc_attr( $term->slug ); ?>"<?php checked( $chosen ); ?><?php disabled( $disable_empty && $empty ); ?><?php echo $extra; // Pre-escaped data attributes. ?>>
+		<span class="catalog-filter-option__box" aria-hidden="true"></span>
+		<span class="catalog-filter-option__name"><?php echo esc_html( $term->name ); ?></span>
+		<small aria-label="<?php echo esc_attr( $count . ' sản phẩm' ); ?>"><?php echo esc_html( $count ); ?></small>
+	</label>
+	<?php
 }
 
-function caia_catalog_filter_group( $key, $taxonomy, $label, $state ) {
-	if ( ! taxonomy_exists( $taxonomy ) ) { return; }
-	$terms = get_terms( array( 'taxonomy' => $taxonomy, 'hide_empty' => false, 'orderby' => 'name' ) );
+function caia_catalog_category_group( $terms, $state ) {
 	if ( is_wp_error( $terms ) || ! $terms ) { return; }
-	if ( $key === 'sizes' ) { usort( $terms, function( $a, $b ) { return strnatcasecmp( $a->name, $b->name ); } ); }
-	$counts = caia_catalog_facet_counts( $taxonomy, $state, $key );
+	$counts = caia_catalog_facet_counts( 'product_cat', $state, 'categories' );
+	$chosen_ids = wp_list_pluck( $state['categories'], 'term_id' );
+	$render = function( $parent ) use ( &$render, $terms, $counts, $chosen_ids ) {
+		$children = array_filter( $terms, function( $term ) use ( $parent ) { return (int) $term->parent === $parent; } );
+		if ( ! $children ) { return; }
+		echo $parent ? '<div class="catalog-filter-options catalog-filter-options--children">' : '';
+		foreach ( $children as $term ) {
+			$url = get_term_link( $term );
+			if ( is_wp_error( $url ) ) { continue; }
+			// Categories stay clickable even when empty: they also act as navigation.
+			caia_catalog_checkbox( 'categories', $term, absint( $counts[ $term->term_id ] ?? 0 ), in_array( $term->term_id, $chosen_ids, true ), ' data-catalog-category data-url="' . esc_url( $url ) . '"', false );
+			$render( (int) $term->term_id );
+		}
+		echo $parent ? '</div>' : '';
+	};
 	?>
 	<fieldset class="catalog-filter-group">
-		<legend><?php echo esc_html( $label ); ?></legend>
-		<div class="catalog-filter-options<?php echo $key === 'sizes' ? ' catalog-filter-options--sizes' : ''; ?>">
-			<?php foreach ( $terms as $term ) :
-				$count = absint( $counts[ $term->term_id ] ?? 0 );
-				$chosen = in_array( $term->slug, $state[ $key ], true );
-				?>
-				<label class="catalog-filter-option<?php echo ! $count && ! $chosen ? ' is-unavailable' : ''; ?>">
-					<input type="checkbox" name="<?php echo esc_attr( $key ); ?>[]" value="<?php echo esc_attr( $term->slug ); ?>"<?php checked( $chosen ); ?><?php disabled( ! $count && ! $chosen ); ?>>
-					<span><?php echo esc_html( $term->name ); ?></span><small aria-label="<?php echo esc_attr( $count . ' sản phẩm' ); ?>"><?php echo esc_html( $count ); ?></small>
-				</label>
-			<?php endforeach; ?>
+		<legend>Danh mục sản phẩm</legend>
+		<div class="catalog-filter-options"><?php $render( 0 ); ?></div>
+	</fieldset>
+	<?php
+}
+
+function caia_catalog_attribute_group( $key, $filter, $state ) {
+	$terms = get_terms( array( 'taxonomy' => $filter['taxonomy'], 'hide_empty' => false ) );
+	if ( is_wp_error( $terms ) || ! $terms ) { return; }
+	usort( $terms, function( $a, $b ) { return strnatcasecmp( $a->name, $b->name ); } );
+	$counts = caia_catalog_facet_counts( $filter['taxonomy'], $state, $key );
+	$chosen = $state['attributes'][ $key ] ?? array();
+	// Hide attributes that no product in the current scope uses.
+	if ( ! array_filter( $counts ) && ! $chosen ) { return; }
+	?>
+	<fieldset class="catalog-filter-group">
+		<legend><?php echo esc_html( $filter['label'] ); ?></legend>
+		<div class="catalog-filter-options">
+			<?php foreach ( $terms as $term ) {
+				caia_catalog_checkbox( $key, $term, absint( $counts[ $term->term_id ] ?? 0 ), in_array( $term->slug, $chosen, true ) );
+			} ?>
 		</div>
 	</fieldset>
+	<?php
+}
+
+/**
+ * URL for a filter combination: one category opens its own archive, none or several use the shop.
+ * Mirrors the routing in catalog.js.
+ */
+function caia_catalog_view_url( $category_slugs, $attributes, $orderby ) {
+	$url  = wc_get_page_permalink( 'shop' );
+	$args = array();
+	if ( count( $category_slugs ) === 1 ) {
+		$link = get_term_link( $category_slugs[0], 'product_cat' );
+		$url  = is_wp_error( $link ) ? $url : $link;
+	} elseif ( $category_slugs ) {
+		$args['categories'] = $category_slugs;
+	}
+	foreach ( $attributes as $key => $slugs ) {
+		if ( $slugs ) { $args[ $key ] = $slugs; }
+	}
+	if ( $orderby !== get_option( 'woocommerce_default_catalog_orderby', 'menu_order' ) ) { $args['orderby'] = $orderby; }
+	return $args ? $url . '?' . http_build_query( $args ) : $url;
+}
+
+/** Chips for every active filter, each linking to the same view without it. */
+function caia_catalog_active_filters( $state ) {
+	$chips = array();
+	$category_slugs = wp_list_pluck( $state['categories'], 'slug' );
+	foreach ( $state['categories'] as $term ) {
+		$chips[] = array( $term->name, caia_catalog_view_url( array_values( array_diff( $category_slugs, array( $term->slug ) ) ), $state['attributes'], $state['orderby'] ) );
+	}
+	foreach ( caia_catalog_attribute_filters() as $key => $filter ) {
+		foreach ( $state['attributes'][ $key ] as $slug ) {
+			$term = get_term_by( 'slug', $slug, $filter['taxonomy'] );
+			if ( ! $term instanceof WP_Term ) { continue; }
+			$attributes = $state['attributes'];
+			$attributes[ $key ] = array_values( array_diff( $attributes[ $key ], array( $slug ) ) );
+			$chips[] = array( $term->name, caia_catalog_view_url( $category_slugs, $attributes, $state['orderby'] ) );
+		}
+	}
+	if ( ! $chips ) { return; }
+	?>
+	<div class="catalog-active">
+		<span class="catalog-active__label">Đang lọc:</span>
+		<?php foreach ( $chips as $chip ) : ?>
+			<a class="catalog-active__chip" href="<?php echo esc_url( $chip[1] ); ?>" aria-label="<?php echo esc_attr( 'Bỏ lọc ' . $chip[0] ); ?>"><?php echo esc_html( $chip[0] ); ?> <i class="fa-solid fa-xmark" aria-hidden="true"></i></a>
+		<?php endforeach; ?>
+		<a class="catalog-active__clear" href="<?php echo esc_url( wc_get_page_permalink( 'shop' ) ); ?>">Xóa tất cả</a>
+	</div>
 	<?php
 }
 
@@ -152,24 +249,18 @@ function caia_render_catalog_page() {
 		<aside class="catalog-sidebar" aria-label="Bộ lọc sản phẩm">
 			<details class="catalog-filters" open>
 				<summary>Bộ lọc sản phẩm <i class="fa-solid fa-sliders" aria-hidden="true"></i></summary>
-				<form id="catalog-filter-form" method="get" action="<?php echo esc_url( caia_catalog_base_url() ); ?>">
-					<div class="catalog-filter-group">
-						<label for="catalog-category">Phân loại</label>
-						<select id="catalog-category" name="catalog_category" data-catalog-category>
-							<option value="" data-url="<?php echo esc_url( wc_get_page_permalink( 'shop' ) ); ?>">Chọn danh mục</option>
-							<?php if ( ! is_wp_error( $terms ) ) { caia_catalog_category_options( $terms, $state['term'] ); } ?>
-						</select>
-					</div>
-					<?php caia_catalog_filter_group( 'materials', 'pa_chat-lieu', 'Chất liệu', $state ); ?>
-					<?php caia_catalog_filter_group( 'sizes', 'pa_kich-thuoc', 'Kích thước', $state ); ?>
-					<div class="catalog-filter-actions"><button type="submit">Áp dụng</button><a href="<?php echo esc_url( caia_catalog_base_url() ); ?>">Xóa bộ lọc</a></div>
+				<form id="catalog-filter-form" method="get" action="<?php echo esc_url( caia_catalog_base_url() ); ?>" data-shop-url="<?php echo esc_url( wc_get_page_permalink( 'shop' ) ); ?>">
+					<p class="catalog-filters__title"><i class="fa-solid fa-sliders" aria-hidden="true"></i> Bộ lọc sản phẩm</p>
+					<?php caia_catalog_category_group( $terms, $state ); ?>
+					<?php foreach ( caia_catalog_attribute_filters() as $key => $filter ) { caia_catalog_attribute_group( $key, $filter, $state ); } ?>
+					<div class="catalog-filter-actions"><button type="submit">Áp dụng</button><a href="<?php echo esc_url( wc_get_page_permalink( 'shop' ) ); ?>">Xóa bộ lọc</a></div>
 				</form>
 			</details>
 		</aside>
 		<section class="catalog-results home-products" aria-labelledby="catalog-title">
 			<h1 id="catalog-title" class="screen-reader-text"><?php echo esc_html( $title ); ?></h1>
 			<div class="catalog-toolbar">
-				<p class="screen-reader-text" role="status"><?php echo esc_html( $query->found_posts . ' sản phẩm' ); ?></p>
+				<p class="catalog-toolbar__count" role="status"><?php echo esc_html( sprintf( '%d sản phẩm', $query->found_posts ) ); ?></p>
 				<label class="screen-reader-text" for="catalog-orderby">Sắp xếp sản phẩm</label>
 				<select id="catalog-orderby" name="orderby" form="catalog-filter-form">
 					<?php foreach ( caia_catalog_order_options() as $value => $label ) : ?>
@@ -177,6 +268,7 @@ function caia_render_catalog_page() {
 					<?php endforeach; ?>
 				</select>
 			</div>
+			<?php caia_catalog_active_filters( $state ); ?>
 			<?php if ( $query->have_posts() ) : ?>
 				<div class="catalog-grid">
 					<?php foreach ( $query->posts as $post ) { caia_render_product_card( wc_get_product( $post->ID ), $state['term'], 'h2' ); } ?>
@@ -189,7 +281,7 @@ function caia_render_catalog_page() {
 				) );
 				if ( $pagination ) : ?><nav class="catalog-pagination" aria-label="Phân trang sản phẩm"><?php echo wp_kses_post( $pagination ); ?></nav><?php endif; ?>
 			<?php else : ?>
-				<div class="catalog-empty"><p>Không có sản phẩm phù hợp với bộ lọc đã chọn.</p><a href="<?php echo esc_url( caia_catalog_base_url() ); ?>">Xóa bộ lọc</a></div>
+				<div class="catalog-empty"><p>Không có sản phẩm phù hợp với bộ lọc đã chọn.</p><a href="<?php echo esc_url( wc_get_page_permalink( 'shop' ) ); ?>">Xóa bộ lọc</a></div>
 			<?php endif; ?>
 		</section>
 	</div>

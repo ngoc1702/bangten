@@ -166,17 +166,21 @@ function caia_product_related() {
 /** Shared homepage, related-product and search card. */
 function caia_render_product_card( $item, $term = null, $heading_tag = 'h3' ) {
 	if ( ! $item instanceof WC_Product ) { return; }
+	// $term is kept for existing callers; the card no longer shows the category.
 	$heading_tag = $heading_tag === 'h2' ? 'h2' : 'h3';
-	if ( ! $term instanceof WP_Term ) {
-		$categories = get_the_terms( $item->get_id(), 'product_cat' );
-		$term = ! is_wp_error( $categories ) && $categories ? reset( $categories ) : null;
-	}
-	$url = $term ? get_term_link( $term ) : '';
 	?>
 	<article class="home-products__card">
 		<a class="home-products__image-link" href="<?php echo esc_url( $item->get_permalink() ); ?>" aria-label="<?php echo esc_attr( $item->get_name() ); ?>"><?php echo $item->get_image( 'woocommerce_single', array( 'class' => 'home-products__image', 'loading' => 'lazy' ) ); ?></a>
-		<?php if ( $term && ! is_wp_error( $url ) ) : ?><a class="home-products__category" href="<?php echo esc_url( $url ); ?>"><?php echo esc_html( $term->name ); ?></a><?php endif; ?>
-		<<?php echo $heading_tag; ?> class="home-products__title"><a href="<?php echo esc_url( $item->get_permalink() ); ?>"><?php echo esc_html( $item->get_name() ); ?></a></<?php echo $heading_tag; ?>>
+		<div class="home-products__body">
+			<<?php echo $heading_tag; ?> class="home-products__title"><a href="<?php echo esc_url( $item->get_permalink() ); ?>"><?php echo esc_html( $item->get_name() ); ?></a></<?php echo $heading_tag; ?>>
+			<p class="home-products__price">
+				<?php if ( $item->get_price() !== '' ) : ?>
+					<?php echo wp_kses_post( $item->get_price_html() ); ?>
+				<?php else : ?>
+					<span class="home-products__contact">Liên hệ</span>
+				<?php endif; ?>
+			</p>
+		</div>
 	</article>
 	<?php
 }

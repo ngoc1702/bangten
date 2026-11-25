@@ -23,7 +23,7 @@ function caia_render_product_search_results() {
 	<div class="product-search-page home-products">
 		<header class="product-search-page__header">
 			<h1>Kết quả tìm kiếm</h1>
-			<p>Tìm thấy <?php echo esc_html( number_format_i18n( $results->found_posts ) ); ?> tác phẩm<?php if ( $search !== '' ) : ?> cho “<strong><?php echo esc_html( $search ); ?></strong>”<?php endif; ?>.</p>
+			<p>Tìm thấy <?php echo esc_html( number_format_i18n( $results->found_posts ) ); ?> sản phẩm<?php if ( $search !== '' ) : ?> cho “<strong><?php echo esc_html( $search ); ?></strong>”<?php endif; ?>.</p>
 		</header>
 		<?php if ( $results->posts ) : ?>
 			<div class="home-products__grid">

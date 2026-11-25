@@ -22,9 +22,6 @@ body {
   --site-surface: #f2f5fa;
 }
 
-
-
-
 html {
   scroll-behavior: smooth;
 }
@@ -398,7 +395,6 @@ body {
   line-height: 1.45;
 }
 
-
 body.has-header-menusub .site-header {
   top: 70px;
 }
@@ -536,7 +532,6 @@ body.admin-bar.has-header-menusub.header-sub-hidden .site-header {
   }
 
 }
-
 
 /* Header
 ------------------------------------------------------------ */
@@ -2091,216 +2086,10 @@ input#submit {
   width: 100%;
 }
 
-/* footer */
-.content-cta {
-  position: relative;
-  isolation: isolate;
-  min-height: 560px;
-  padding: 70px 0;
-  overflow: hidden;
-  background: #000000e3
-}
-
-
-
-.content-cta .wrap {
-  position: relative;
-  z-index: 1;
-  width: 82%;
-  max-width: var(--site-content-width);
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(420px, 0.92fr);
-  align-items: center;
-  gap: 72px;
-  padding: 0;
-  background: transparent;
-  box-shadow: none;
-  color: #fff;
-}
-
-.content-cta .widget,
-.content-cta .widget-wrap {
-  margin: 0;
-  padding: 0;
-}
-
-.content-cta .widgettitle {
-  color: #fff;
-  font-size: 34px;
-  font-weight: 700;
-  line-height: 1.15;
-  margin: 0 0 30px;
-  text-transform: uppercase;
-  text-shadow: 0 2px 2px rgba(0, 0, 0, 0.35);
-}
-
-.content-cta p,
-.content-cta label {
-  color: #fff;
-}
-
-.content-cta ul {
-  display: grid;
-  gap: 24px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.content-cta li {
-  position: relative;
-  margin: 0;
-  padding-left: 38px;
-  color: #fff;
-}
-
-.content-cta li::before {
-  content: "\2713";
-  position: absolute;
-  top: 3px;
-  left: 0;
-  width: 22px;
-  height: 22px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  background: var(--site-primary);
-  color: #fff;
-  font-size: 13px;
-  font-weight: 800;
-  line-height: 1;
-}
-
-.content-cta li h3 {
-  color: var(--site-primary);
-  font-size: 16px;
-  font-weight: 600;
-  line-height: 1.3;
-  margin: 0 0 6px;
-  text-transform: uppercase;
-}
-
-.content-cta li p {
-  color: #fff;
-  font-size: 16px;
-  font-weight: 400;
-  line-height: 1.75;
-  margin: 0;
-  text-align: left;
-}
-
-.content-cta .widget_fluentform_widget .widget-wrap {
-  position: relative;
-  padding: 52px 58px 36px;
-  border-radius: 18px;
-  background: var(--site-primary);
-  clip-path: polygon(0 0, 84% 0, 100% 21%, 100% 100%, 0 100%);
-}
-
-.content-cta .widget_fluentform_widget .widget-wrap::before {
-  content: "Đăng ký Ngay";
-  display: block;
-  color: #fff;
-  font-size: 34px;
-  font-weight: 700;
-  line-height: 1.15;
-  margin: 0 0 26px;
-  text-align: center;
-  text-transform: uppercase;
-}
-
-.content-cta .fluentform,
-.content-cta .frm-fluent-form,
-.content-cta fieldset {
-  margin: 0 !important;
-  padding: 0 !important;
-}
-
-.content-cta .ff-el-group {
-  margin: 0 0 24px;
-}
-
-.content-cta .ff-t-container {
-  display: block;
-}
-
-.content-cta .ff-t-cell {
-  display: block;
-  width: 100%;
-  padding: 0;
-}
-
-.content-cta .ff-el-input--label {
-  display: none !important;
-}
-
-.content-cta input:not([type="hidden"]),
-.content-cta select,
-.content-cta textarea,
-.content-cta .ff-el-form-control {
-  width: 100%;
-  min-height: 48px;
-  height: 48px;
-  padding: 8px 16px;
-  border: 0 !important;
-  border-radius: 6px;
-  background: #fff !important;
-  font-size: 16px;
-  font-weight: 500;
-  line-height: 1.4;
-  box-shadow: none !important;
-  font-family: "Montserrat", sans-serif;
-}
-
-.content-cta input::placeholder,
-.content-cta textarea::placeholder {
-  color: #666 !important;
-  font-size: 16px !important;
-  font-family: "Montserrat", sans-serif;
-}
-
 .fluentform .ff-el-is-error .text-danger {
     font-size: var(--site-body-size) !important;
     margin-top: 10px !important;
     margin-bottom: 10px ;
-}
-
-.content-cta textarea {
-  min-height: 104px !important;
-  height: 104px !important;
-  resize: vertical;
-}
-
-.content-cta .ff_submit_btn_wrapper {
-  margin: 4px 0 0;
-  text-align: center;
-}
-
-.content-cta input[type="submit"],
-.content-cta button[type="submit"],
-.content-cta .ff-btn-submit {
-  width: auto;
-  min-width: 178px;
-  height: 48px;
-  min-height: 48px;
-  padding: 0 28px !important;
-  border: 0 !important;
-  border-radius: 5px;
-  background: #fff !important;
-  color: var(--site-primary) !important;
-  font-size: 16px;
-  font-weight: 500;
-  text-transform: none;
-  cursor: pointer;
-  font-family: "Montserrat", sans-serif;
-}
-
-.content-cta .ff-btn-submit:hover,
-.content-cta input[type="submit"]:hover,
-.content-cta button[type="submit"]:hover {
-  background: #f5f5f5 !important;
-  color: var(--site-primary) !important;
 }
 
 /* Consultation widget displayed before the footer. */
@@ -2478,9 +2267,10 @@ input#submit {
 }
 
 .nhantuvan button[type="submit"]::after {
-  content: "\2192";
+  content: "\f061";
   display: inline-block;
   margin-left: 10px;
+  font: 900 14px/1 "Font Awesome 6 Free";
 }
 
 .nhantuvan input[type="submit"]:hover,
@@ -2529,7 +2319,6 @@ input#submit {
     gap: 0;
   }
 }
-
 
 .contact-page {
   padding: 64px 0 72px;
@@ -2708,7 +2497,6 @@ input#submit {
   }
 }
 
-
 /* Product listing images: keep the zoom inside each image frame. */
 .product-card-image,
 .product-category-card__media {
@@ -2723,8 +2511,7 @@ input#submit {
   margin: 0;
 }
 .product-card-image img,
-.product-category-card__media img,
-.home-products .home-products__image {
+.product-category-card__media img {
   transition: transform 700ms ease;
 }
 .product-card-image img,
@@ -2735,8 +2522,7 @@ input#submit {
 }
 @media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
   .product-card-image:hover img,
-  .product-category-card__media:hover img,
-  .home-products__image-link:hover .home-products__image {
+  .product-category-card__media:hover img {
     transform: scale(1.04);
   }
 }
@@ -2750,8 +2536,6 @@ input#submit {
 }
 
 /* Trang chủ */
-
-
 
 /* CSS
 ------------------------------------------------------------ */
