@@ -459,7 +459,7 @@ if (!class_exists('Caia_Social_Share')){
 				background: #d6d6d6;
 				padding: 5px 10px;
 				width: 187px;
-				border-radius: 10px;
+				border-radius: 0;
 				z-index: 300;
 			}
 			.caia-social-share .hide:after{
@@ -500,9 +500,9 @@ if (!class_exists('Caia_Social_Share')){
 			}
 			a.caia_social_button {
 				background-color:#007ea8;
-				-moz-border-radius:3px;
-				-webkit-border-radius:3px;
-				border-radius:3px;
+				-moz-border-radius:0;
+				-webkit-border-radius:0;
+				border-radius:0;
 				/*border:1px solid #124d77;*/
 				display:inline-block;
 				cursor:pointer;

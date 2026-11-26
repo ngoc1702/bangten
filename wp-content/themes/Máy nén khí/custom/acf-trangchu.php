@@ -47,7 +47,34 @@ function caia_register_home_page_fields() {
 					'instructions' => 'Để trống để tự hiển thị các danh mục cha, trừ Chưa phân loại. Ảnh lấy từ Sản phẩm → Danh mục → Hình thu nhỏ. Có thể chọn riêng các danh mục muốn hiển thị.',
 				),
 				array(
-					'key' => 'field_caia_home_tab_stats', 'label' => '3. Con số nổi bật', 'type' => 'tab', 'placement' => 'top',
+					'key' => 'field_caia_home_tab_products', 'label' => '3. Sản phẩm theo danh mục', 'type' => 'tab', 'placement' => 'top',
+				),
+				array(
+					'key' => 'field_caia_home_product_sections', 'name' => 'home_product_sections',
+					'label' => 'Các danh mục hiển thị', 'type' => 'repeater', 'layout' => 'block',
+					'button_label' => 'Thêm danh mục', 'collapsed' => 'field_caia_home_product_category',
+					'instructions' => 'Mỗi hàng tạo một section, hiển thị ngay sau Danh mục sản phẩm. Kéo thả để đổi thứ tự. Tab ngoài website tự lấy các danh mục con trực tiếp; nếu không có danh mục con, hiển thị sản phẩm của danh mục đã chọn. Tab và section chưa có sản phẩm sẽ tự ẩn, tự hiện lại khi có sản phẩm.',
+					'sub_fields' => array(
+						array(
+							'key' => 'field_caia_home_product_category', 'name' => 'category',
+							'label' => 'Danh mục cha', 'type' => 'taxonomy', 'taxonomy' => 'product_cat',
+							'field_type' => 'select', 'return_format' => 'id', 'required' => 1,
+							'add_term' => 0, 'save_terms' => 0, 'load_terms' => 0,
+						),
+						array(
+							'key' => 'field_caia_home_product_heading', 'name' => 'heading',
+							'label' => 'Tiêu đề section', 'type' => 'text',
+							'instructions' => 'Để trống để dùng tên danh mục.',
+						),
+						array(
+							'key' => 'field_caia_home_product_count', 'name' => 'count',
+							'label' => 'Số sản phẩm mỗi tab', 'type' => 'number',
+							'default_value' => 4, 'min' => 1, 'max' => 24, 'step' => 1,
+						),
+					),
+				),
+				array(
+					'key' => 'field_caia_home_tab_stats', 'label' => '4. Con số nổi bật', 'type' => 'tab', 'placement' => 'top',
 				),
 				array(
 					'key' => 'field_caia_home_stats_enabled', 'name' => 'home_stats_enabled',
@@ -69,34 +96,29 @@ function caia_register_home_page_fields() {
 					),
 				),
 				array(
-					'key' => 'field_caia_home_tab_products', 'label' => '4. Sản phẩm theo danh mục', 'type' => 'tab', 'placement' => 'top',
+					'key' => 'field_caia_home_tab_commitment', 'label' => '5. Cam kết chất lượng', 'type' => 'tab', 'placement' => 'top',
 				),
 				array(
-					'key' => 'field_caia_home_product_sections', 'name' => 'home_product_sections',
-					'label' => 'Các danh mục hiển thị', 'type' => 'repeater', 'layout' => 'block',
-					'button_label' => 'Thêm danh mục', 'collapsed' => 'field_caia_home_product_category',
-					'instructions' => 'Mỗi hàng tạo một section sau banner. Kéo thả để đổi thứ tự. Tab ngoài website tự lấy các danh mục con trực tiếp; nếu không có danh mục con, hiển thị sản phẩm của danh mục đã chọn. Tab và section chưa có sản phẩm sẽ tự ẩn, tự hiện lại khi có sản phẩm.',
-					'sub_fields' => array(
-						array(
-							'key' => 'field_caia_home_product_category', 'name' => 'category',
-							'label' => 'Danh mục cha', 'type' => 'taxonomy', 'taxonomy' => 'product_cat',
-							'field_type' => 'select', 'return_format' => 'id', 'required' => 1,
-							'add_term' => 0, 'save_terms' => 0, 'load_terms' => 0,
-						),
-						array(
-							'key' => 'field_caia_home_product_heading', 'name' => 'heading',
-							'label' => 'Tiêu đề section', 'type' => 'text',
-							'instructions' => 'Để trống để dùng tên danh mục.',
-						),
-						array(
-							'key' => 'field_caia_home_product_count', 'name' => 'count',
-							'label' => 'Số sản phẩm mỗi tab', 'type' => 'number',
-							'default_value' => 4, 'min' => 1, 'max' => 24, 'step' => 1,
-						),
-					),
+					'key' => 'field_caia_home_commitment_enabled', 'name' => 'home_commitment_enabled',
+					'label' => 'Hiển thị section cam kết', 'type' => 'true_false', 'ui' => 1, 'default_value' => 1,
 				),
 				array(
-					'key' => 'field_caia_home_tab_news', 'label' => '5. Tin tức nổi bật', 'type' => 'tab', 'placement' => 'top',
+					'key' => 'field_caia_home_commitment_subtitle', 'name' => 'home_commitment_subtitle',
+					'label' => 'Dòng chữ nhỏ', 'type' => 'text', 'default_value' => 'Công ty TNHH Thọ Lập Hưng Yên',
+				),
+				array(
+					'key' => 'field_caia_home_commitment_title', 'name' => 'home_commitment_title',
+					'label' => 'Câu cam kết', 'type' => 'textarea', 'rows' => 2, 'new_lines' => '',
+					'default_value' => 'Cam kết tập trung tất cả nguồn lực để đảm bảo thực hiện chính sách chất lượng',
+				),
+				array(
+					'key' => 'field_caia_home_commitment_image', 'name' => 'home_commitment_image',
+					'label' => 'Ảnh nền', 'type' => 'image', 'return_format' => 'id', 'preview_size' => 'medium',
+					'mime_types' => 'jpg,jpeg,png,webp',
+					'instructions' => 'Nên dùng PNG nền trong suốt, ngang khoảng 3000px trở lên, phần trên khoảng 1/4 ảnh để trống (chữ nằm ở đó). Ảnh hiển thị đủ chiều ngang, không bị cắt hay kéo giãn; chiều cao section tự tính theo tỷ lệ ảnh.',
+				),
+				array(
+					'key' => 'field_caia_home_tab_news', 'label' => '6. Tin tức nổi bật', 'type' => 'tab', 'placement' => 'top',
 				),
 				array(
 					'key'           => 'field_caia_home_news_enabled',
@@ -142,7 +164,7 @@ function caia_register_home_page_fields() {
 					'instructions'  => 'Chọn đường dẫn và nhập chữ trên nút. Để trống để dùng trang Blog với nhãn “Xem tất cả bài viết”.',
 				),
 				array(
-					'key' => 'field_caia_home_tab_reviews', 'label' => '6. Đánh giá khách hàng', 'type' => 'tab', 'placement' => 'top',
+					'key' => 'field_caia_home_tab_reviews', 'label' => '7. Đánh giá khách hàng', 'type' => 'tab', 'placement' => 'top',
 				),
 				...caia_home_review_fields(),
 			),
@@ -261,8 +283,11 @@ function caia_render_home_banner( $page_id ) {
 	if ( ! $image_ids ) {
 		return;
 	}
+	// Ratio of the first banner image drives the banner height in CSS.
+	$first = wp_get_attachment_image_src( $image_ids[0], 'full' );
+	$ratio = ( $first && $first[1] && $first[2] ) ? round( $first[1] / $first[2], 4 ) : 2.4;
 	?>
-	<section class="home-hero" aria-label="Banner trang chủ">
+	<section class="home-hero" aria-label="Banner trang chủ" style="--hero-ratio: <?php echo esc_attr( $ratio ); ?>;">
 		<div class="home-hero__slider">
 			<?php foreach ( $image_ids as $index => $image_id ) : ?>
 				<div class="home-hero__slide">
@@ -370,6 +395,41 @@ function caia_render_home_stats( $page_id ) {
 	<?php
 }
 
+function caia_render_home_commitment( $page_id ) {
+	if ( ! function_exists( 'get_field' ) || get_field( 'field_caia_home_commitment_enabled', $page_id ) === false ) {
+		return;
+	}
+	// Fields not yet saved in the CMS return null: fall back to the same defaults the admin form shows.
+	$title    = get_field( 'field_caia_home_commitment_title', $page_id );
+	$title    = trim( (string) ( $title ?? 'Cam kết tập trung tất cả nguồn lực để đảm bảo thực hiện chính sách chất lượng' ) );
+	$subtitle = get_field( 'field_caia_home_commitment_subtitle', $page_id );
+	$subtitle = trim( (string) ( $subtitle ?? 'Công ty TNHH Thọ Lập Hưng Yên' ) );
+	if ( $title === '' ) {
+		return;
+	}
+	$image_id = absint( get_field( 'field_caia_home_commitment_image', $page_id ) );
+	$image    = $image_id ? wp_get_attachment_image_src( $image_id, 'full' ) : false;
+	$style    = '';
+	if ( $image ) {
+		// Section height follows the photo's real ratio so the full-width image is never cropped or stretched.
+		$ratio = ( $image[1] && $image[2] ) ? round( $image[1] / $image[2], 4 ) : 2;
+		$style = sprintf( ' style="background-image: url(\'%s\'); --commitment-ratio: %s;"', esc_url( $image[0] ), esc_attr( $ratio ) );
+	}
+	?>
+	<section class="home-commitment<?php echo $image ? ' has-image' : ''; ?>" aria-labelledby="home-commitment-title"<?php echo $style; ?>>
+		<div class="wrap">
+			<div class="home-commitment__quote">
+				<?php if ( $subtitle !== '' ) : ?>
+					<p class="home-commitment__subtitle"><?php echo esc_html( $subtitle ); ?></p>
+				<?php endif; ?>
+				<h2 id="home-commitment-title" class="home-commitment__title"><?php echo esc_html( $title ); ?></h2>
+				<i class="fa-solid fa-quote-right home-commitment__mark" aria-hidden="true"></i>
+			</div>
+		</div>
+	</section>
+	<?php
+}
+
 function caia_render_home_product_sections( $page_id ) {
 	if ( ! function_exists( 'get_field' ) || ! function_exists( 'wc_get_products' ) ) {
 		return;
@@ -419,7 +479,7 @@ function caia_render_home_product_sections( $page_id ) {
 			<div class="wrap">
 				<header class="home-products__header">
 					<h2 class="home-products__heading" id="<?php echo esc_attr( $prefix . '-heading' ); ?>"><?php echo esc_html( $heading ); ?></h2>
-					<img class="home-section-heading__ornament" src="<?php echo esc_url( get_stylesheet_directory_uri() . '/images/img-heading.png' ); ?>" width="200" height="68" alt="" aria-hidden="true" decoding="async">
+					<a class="home-products__button" href="<?php echo esc_url( $tabs[0]['url'] ); ?>" aria-label="<?php echo esc_attr( 'Xem tất cả sản phẩm trong ' . $tabs[0]['term']->name ); ?>">Xem tất cả<i class="fa-solid fa-arrow-right home-products__button-icon" aria-hidden="true"></i></a>
 				</header>
 				<?php if ( $has_child_tabs ) : ?>
 					<div class="home-products__tabs" role="tablist" aria-label="<?php echo esc_attr( 'Danh mục con của ' . $parent->name ); ?>">
@@ -440,7 +500,6 @@ function caia_render_home_product_sections( $page_id ) {
 							</div>
 					</div>
 				<?php endforeach; ?>
-				<div class="home-products__footer"><a class="home-products__button" href="<?php echo esc_url( $tabs[0]['url'] ); ?>" aria-label="<?php echo esc_attr( 'Xem tất cả sản phẩm trong ' . $tabs[0]['term']->name ); ?>">Xem tất cả sản phẩm<i class="fa-solid fa-arrow-right home-products__button-icon" aria-hidden="true"></i></a></div>
 			</div>
 		</section>
 		<?php
@@ -592,9 +651,11 @@ function caia_render_news_card( $news_post, $heading_tag = 'h3' ) {
 				<?php echo get_the_post_thumbnail( $post_id, 'large', array( 'class' => 'home-news__image', 'loading' => 'lazy' ) ); ?>
 			<?php else : ?><span class="home-news__image home-news__image--empty" aria-hidden="true"></span><?php endif; ?>
 		</a>
-		<p class="home-news__date"><i class="fa-regular fa-calendar-days" aria-hidden="true"></i><span class="screen-reader-text">Ngày đăng: </span><time datetime="<?php echo esc_attr( get_the_date( DATE_W3C, $post_id ) ); ?>"><?php echo esc_html( get_the_date( 'd/m/Y', $post_id ) ); ?></time></p>
-		<<?php echo $heading_tag; ?> class="home-news__title"><a href="<?php echo esc_url( get_permalink( $post_id ) ); ?>"><?php echo esc_html( get_the_title( $post_id ) ); ?></a></<?php echo $heading_tag; ?>>
-		<p class="home-news__excerpt"><?php echo esc_html( $excerpt ); ?></p>
+		<div class="home-news__body">
+			<<?php echo $heading_tag; ?> class="home-news__title"><a href="<?php echo esc_url( get_permalink( $post_id ) ); ?>"><?php echo esc_html( get_the_title( $post_id ) ); ?></a></<?php echo $heading_tag; ?>>
+			<p class="home-news__date"><i class="fa-regular fa-calendar-days" aria-hidden="true"></i><time datetime="<?php echo esc_attr( get_the_date( DATE_W3C, $post_id ) ); ?>"><?php echo esc_html( get_the_date( 'd/m/Y', $post_id ) ); ?></time></p>
+			<p class="home-news__excerpt"><?php echo esc_html( $excerpt ); ?></p>
+		</div>
 	</article>
 	<?php
 }

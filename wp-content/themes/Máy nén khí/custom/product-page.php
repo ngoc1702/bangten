@@ -6,7 +6,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class Caia_Product_Contact_Widget extends WP_Widget {
 	public function __construct() {
-		parent::__construct( 'caia_product_contact', 'Bửu Liên — Liên hệ sản phẩm', array( 'description' => 'Thay số điện thoại gọi và Zalo trên tất cả trang sản phẩm.' ) );
+		parent::__construct( 'caia_product_contact', 'Liên hệ sản phẩm', array( 'description' => 'Thay số điện thoại gọi và Zalo trên tất cả trang sản phẩm.' ) );
 	}
 
 	public function widget( $args, $instance ) {
@@ -49,7 +49,7 @@ class Caia_Product_Contact_Widget extends WP_Widget {
 
 add_action( 'widgets_init', function() {
 	register_widget( 'Caia_Product_Contact_Widget' );
-	genesis_register_widget_area( array( 'id' => 'product-contact', 'name' => 'Sản phẩm — Nút liên hệ', 'description' => 'Thêm widget “Bửu Liên — Liên hệ sản phẩm” để thay số gọi và Zalo.' ) );
+	genesis_register_widget_area( array( 'id' => 'product-contact', 'name' => 'Sản phẩm — Nút liên hệ', 'description' => 'Thêm widget “Liên hệ sản phẩm” để thay số gọi và Zalo.' ) );
 	genesis_register_widget_area( array( 'id' => 'product-commitments', 'name' => 'Sản phẩm — Cam kết & Chính sách', 'description' => 'Mỗi widget Hình ảnh là một thẻ cam kết. Thay ảnh và tiêu đề, kéo thả để đổi thứ tự.' ) );
 } );
 
@@ -66,7 +66,9 @@ function caia_configure_product_detail() {
 	if ( ! function_exists( 'is_product' ) || ! is_product() ) {
 		return;
 	}
+	// Price (or "Liên hệ") sits right under the category line.
 	remove_action( 'woocommerce_single_product_summary', 'caia_render_single_product_price', 11 );
+	add_action( 'woocommerce_single_product_summary', 'caia_render_single_product_price', 9 );
 	remove_action( 'woocommerce_single_product_summary', 'woocommerce_template_single_meta', 40 );
 	remove_action( 'woocommerce_before_single_product_summary', 'woocommerce_show_product_sale_flash', 10 );
 	remove_action( 'woocommerce_after_single_product_summary', 'woocommerce_upsell_display', 15 );

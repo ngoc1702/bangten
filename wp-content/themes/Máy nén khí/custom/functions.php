@@ -7,11 +7,13 @@ add_theme_support( 'html5', array( 'search-form', 'comment-form', 'comment-list'
 include('acf-trangchu.php');
 include('acf-lien-he.php');
 include('acf-hoi-dap.php');
+include('acf-ve-chung-toi.php');
 include('acf-tin-tuc.php');
 include('acf-san-pham.php');
 include('product-page.php');
 include('product-category-page.php');
 include('product-catalog.php');
+include('footer-widgets.php');
 
 /**
  * Site scripts: shared behaviour everywhere, slick only where the homepage sliders live.
@@ -23,7 +25,7 @@ function caia_enqueue_site_scripts() {
 	$url  = get_stylesheet_directory_uri();
 	$deps = array( 'jquery' );
 
-	if ( is_page_template( 'page-trangchu.php' ) ) {
+	if ( is_page_template( 'page-trangchu.php' ) || is_page_template( 'page-ve-chung-toi.php' ) ) {
 		wp_enqueue_script( 'caia-slick', $url . '/custom/js/slick.js', array( 'jquery' ), filemtime( $dir . '/custom/js/slick.js' ), true );
 		$deps[] = 'caia-slick';
 	}
@@ -203,6 +205,9 @@ function caia_add_font_website() {
 	?>
 	<link rel="preconnect" href="https://fonts.googleapis.com">
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&display=swap" rel="stylesheet">
+	<link href="https://fonts.googleapis.com/css2?family=Archivo:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
+	<link href="https://fonts.googleapis.com/css2?family=Geist:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
 	<link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,300..800;1,400..600&display=swap" rel="stylesheet">
 	<?php
 }
@@ -330,7 +335,7 @@ genesis_register_sidebar(
 genesis_register_sidebar( 
 	array(
 		'id'			=> 'content-bfooter',
-		'description'	=> 'Dùng 3 widget Văn bản theo thứ tự: (1) Logo và thông tin Bửu Liên, (2) Liên kết, (3) Mạng xã hội và nút liên hệ. Có thể chèn ảnh để thay icon trong từng widget.',
+		'description'	=> 'Dùng 3 widget theo thứ tự: (1) Chân trang: Thông tin, (2) Chân trang: Liên kết (chọn menu), (3) Chân trang: Mạng xã hội & nút.',
 		'name'			=> 'Toàn bộ - Nội dung trước chân trang',
 	)
 );

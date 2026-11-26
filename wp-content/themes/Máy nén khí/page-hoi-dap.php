@@ -11,6 +11,11 @@ add_action( 'genesis_after_header', 'caia_render_faq_hero', 6 );
 remove_action( 'genesis_loop', 'genesis_do_loop' );
 add_action( 'genesis_loop', 'caia_render_faq_page' );
 
+/** Turns href="/lien-he" style links saved in the CMS into full links for the current site address. */
+function caia_faq_links( $html ) {
+	return preg_replace_callback( '#href="(/(?!/)[^"]*)"#', function( $m ) { return 'href="' . esc_url( home_url( $m[1] ) ) . '"'; }, (string) $html );
+}
+
 function caia_faq_field( $key ) {
 	return function_exists( 'get_field' ) ? get_field( $key, get_queried_object_id() ) : null;
 }
@@ -28,7 +33,7 @@ function caia_render_faq_page() {
 	$first = true;
 	?>
 	<div class="faq-page">
-		<?php if ( $intro ) : ?><div class="faq-page__intro"><?php echo wp_kses_post( $intro ); ?></div><?php endif; ?>
+		<?php if ( $intro ) : ?><div class="faq-page__intro"><?php echo wp_kses_post( caia_faq_links( $intro ) ); ?></div><?php endif; ?>
 		<?php foreach ( $groups as $index => $group ) :
 			if ( ! is_array( $group ) ) { continue; }
 			$items = array_filter( (array) ( $group['items'] ?? array() ), function( $item ) {
@@ -43,7 +48,7 @@ function caia_render_faq_page() {
 					<?php foreach ( $items as $item ) : ?>
 						<details class="faq-item"<?php echo $first && $open_first ? ' open' : ''; ?>>
 							<summary><?php echo esc_html( $item['question'] ); ?></summary>
-							<div class="faq-item__answer"><?php echo wp_kses_post( $item['answer'] ); ?></div>
+							<div class="faq-item__answer"><?php echo wp_kses_post( caia_faq_links( $item['answer'] ) ); ?></div>
 						</details>
 						<?php $first = false; ?>
 					<?php endforeach; ?>

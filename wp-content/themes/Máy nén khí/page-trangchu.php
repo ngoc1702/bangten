@@ -21,8 +21,9 @@ function caia_render_home_page() {
 		echo '<div class="home-page"><h1 class="home-page__title">' . esc_html( get_the_title() ) . '</h1>';
 		caia_render_home_banner( get_the_ID() );
 		caia_render_home_categories( get_the_ID() );
-		caia_render_home_stats( get_the_ID() );
 		caia_render_home_product_sections( get_the_ID() );
+		caia_render_home_stats( get_the_ID() );
+		caia_render_home_commitment( get_the_ID() );
 		caia_render_home_featured_news( get_the_ID() );
 		caia_render_home_reviews( get_the_ID() );
 		echo '</div>';

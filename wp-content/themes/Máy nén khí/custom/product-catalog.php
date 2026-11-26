@@ -159,8 +159,8 @@ function caia_catalog_category_group( $terms, $state ) {
 		echo $parent ? '</div>' : '';
 	};
 	?>
-	<fieldset class="catalog-filter-group">
-		<legend>Danh mục sản phẩm</legend>
+	<fieldset class="catalog-filter-group catalog-filter-group--categories">
+		<legend class="screen-reader-text">Danh mục sản phẩm</legend>
 		<div class="catalog-filter-options"><?php $render( 0 ); ?></div>
 	</fieldset>
 	<?php

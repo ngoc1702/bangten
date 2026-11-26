@@ -1,0 +1,5 @@
+{
+  "tabWidth": 2,
+  "printWidth": 100,
+  "overrides": [{ "files": "*.css", "options": { "parser": "css" } }]
+}

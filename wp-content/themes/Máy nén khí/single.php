@@ -38,51 +38,43 @@ if (!function_exists('thanh_hung_single_remove_caia_extras')) {
     }
 }
 
-if (!function_exists('thanh_hung_get_featured_posts')) {
-    function thanh_hung_get_featured_posts($post_id, $limit = 6)
+if (!function_exists('thanh_hung_get_related_posts')) {
+    /** Posts from the same category first, topped up with the latest posts. */
+    function thanh_hung_get_related_posts($post_id, $limit = 5)
     {
-        $featured_posts = array();
-        $exclude_ids = array($post_id);
+        $exclude = array($post_id);
+        $related = array();
 
-        $featured_query = new WP_Query(array(
-            'post_type' => 'post',
-            'post_status' => 'publish',
-            'posts_per_page' => $limit,
-            'post__not_in' => $exclude_ids,
-            'meta_key' => 'gf_featured_order',
-            'meta_value' => 0,
-            'meta_compare' => '>',
-            'orderby' => array(
-                'meta_value_num' => 'ASC',
-                'date' => 'DESC',
-            ),
-            'ignore_sticky_posts' => true,
-        ));
-
-        foreach ($featured_query->posts as $featured_post) {
-            $featured_posts[] = $featured_post;
-            $exclude_ids[] = $featured_post->ID;
-        }
-
-        wp_reset_postdata();
-
-        if (count($featured_posts) < $limit) {
-            $recent_query = new WP_Query(array(
+        $category_ids = wp_get_post_categories($post_id);
+        if ($category_ids) {
+            $same = get_posts(array(
                 'post_type' => 'post',
                 'post_status' => 'publish',
-                'posts_per_page' => $limit - count($featured_posts),
-                'post__not_in' => $exclude_ids,
+                'posts_per_page' => $limit,
+                'category__in' => $category_ids,
+                'post__not_in' => $exclude,
                 'ignore_sticky_posts' => true,
+                'no_found_rows' => true,
             ));
-
-            foreach ($recent_query->posts as $recent_post) {
-                $featured_posts[] = $recent_post;
+            foreach ($same as $item) {
+                $related[] = $item;
+                $exclude[] = $item->ID;
             }
-
-            wp_reset_postdata();
         }
 
-        return $featured_posts;
+        if (count($related) < $limit) {
+            $recent = get_posts(array(
+                'post_type' => 'post',
+                'post_status' => 'publish',
+                'posts_per_page' => $limit - count($related),
+                'post__not_in' => $exclude,
+                'ignore_sticky_posts' => true,
+                'no_found_rows' => true,
+            ));
+            $related = array_merge($related, $recent);
+        }
+
+        return $related;
     }
 }
 
@@ -114,7 +106,16 @@ if (!function_exists('thanh_hung_render_single_blog_post')) {
         while (have_posts()) : the_post();
             $post_id = get_the_ID();
             $categories = get_the_category($post_id);
-            $featured_posts = array();
+            // Parent product categories only (no children, no "Chưa phân loại").
+            $product_cats = taxonomy_exists('product_cat') ? get_terms(array(
+                'taxonomy'   => 'product_cat',
+                'parent'     => 0,
+                'hide_empty' => false,
+                'exclude'    => array((int) get_option('default_product_cat')),
+                'orderby'    => 'menu_order',
+                'order'      => 'ASC',
+            )) : array();
+            $related_posts = thanh_hung_get_related_posts($post_id, 5);
             ?>
             <main class="single-blog-page">
                 <div class="single-blog-wrap">
@@ -124,31 +125,18 @@ if (!function_exists('thanh_hung_render_single_blog_post')) {
                             <meta itemprop="datePublished" content="<?php echo esc_attr(get_the_date('c')); ?>">
                             <meta itemprop="dateModified" content="<?php echo esc_attr(get_the_modified_date('c')); ?>">
 
-                            <header class="single-blog-hero">
-                                <div class="single-blog-header">
-                                <?php if ($categories) : ?>
-                                    <div class="single-blog-categories">
-                                        <?php foreach ($categories as $category) : ?>
-                                            <span><?php echo esc_html($category->name); ?></span>
-                                        <?php endforeach; ?>
-                                    </div>
-                                <?php endif; ?>
-
+                            <header class="single-blog-header">
                                 <h1 itemprop="headline"><?php the_title(); ?></h1>
 
                                 <div class="single-blog-meta">
                                     <span>
-                                        <i class="fa-solid fa-calendar-days"></i>
+                                        <i class="fa-regular fa-calendar-days" aria-hidden="true"></i>
                                         <time datetime="<?php echo esc_attr(get_the_date('c')); ?>"><?php echo esc_html(get_the_date('d/m/Y')); ?></time>
                                     </span>
                                 </div>
-                                </div>
-                            <?php if (has_post_thumbnail()) : ?>
-                                <figure class="single-blog-hero__image" itemprop="image" itemscope itemtype="https://schema.org/ImageObject">
-                                    <?php the_post_thumbnail('full', array('loading' => 'eager')); ?>
-                                    <meta itemprop="url" content="<?php echo esc_url(get_the_post_thumbnail_url($post_id, 'full')); ?>">
-                                </figure>
-                            <?php endif; ?>
+                                <?php if (has_post_thumbnail()) : ?>
+                                    <meta itemprop="image" content="<?php echo esc_url(get_the_post_thumbnail_url($post_id, 'full')); ?>">
+                                <?php endif; ?>
                             </header>
 
                             <div class="single-blog-content" itemprop="articleBody">
@@ -175,36 +163,38 @@ if (!function_exists('thanh_hung_render_single_blog_post')) {
                             </script>
                         </article>
 
-                        <aside class="single-blog-sidebar" aria-label="Bài viết nổi bật">
-                            <section class="single-related-box">
-                                <h2>Bài viết nổi bật</h2>
+                        <aside class="single-blog-sidebar" aria-label="Thanh bên">
+                            <?php if ($product_cats && !is_wp_error($product_cats)) : ?>
+                                <section class="single-side-box single-cats-box">
+                                    <h2 class="single-side-title">Danh mục sản phẩm</h2>
+                                    <ul class="single-cats-list">
+                                        <?php foreach ($product_cats as $product_cat) : ?>
+                                            <li><a href="<?php echo esc_url(get_term_link($product_cat)); ?>"><?php echo esc_html($product_cat->name); ?></a></li>
+                                        <?php endforeach; ?>
+                                    </ul>
+                                </section>
+                            <?php endif; ?>
 
-                                <?php if ($featured_posts) : ?>
+                            <?php if ($related_posts) : ?>
+                                <section class="single-side-box single-related-box">
+                                    <h2 class="single-side-title">Tin liên quan</h2>
                                     <div class="single-related-list">
-                                        <?php foreach ($featured_posts as $index => $featured_post) : ?>
-                                            <?php
-                                            $featured_categories = get_the_category($featured_post->ID);
-                                            $featured_category = !empty($featured_categories) ? $featured_categories[0] : null;
-                                            ?>
+                                        <?php foreach ($related_posts as $related_post) : ?>
                                             <article class="single-related-item">
-                                                <span class="single-related-number" aria-hidden="true"><?php echo esc_html($index + 1); ?></span>
-                                                <div class="single-related-body">
-                                                    <?php if ($featured_category) : ?>
-                                                        <span class="single-related-category">
-                                                            <?php echo esc_html($featured_category->name); ?>
-                                                        </span>
+                                                <a class="single-related-thumb" href="<?php echo esc_url(get_permalink($related_post)); ?>" tabindex="-1" aria-hidden="true">
+                                                    <?php if (has_post_thumbnail($related_post)) : ?>
+                                                        <?php echo get_the_post_thumbnail($related_post, 'thumbnail', array('loading' => 'lazy', 'alt' => '')); ?>
                                                     <?php endif; ?>
-                                                    <h3>
-                                                        <a href="<?php echo esc_url(get_permalink($featured_post)); ?>">
-                                                            <?php echo esc_html(get_the_title($featured_post)); ?>
-                                                        </a>
-                                                    </h3>
+                                                </a>
+                                                <div class="single-related-body">
+                                                    <h3><a href="<?php echo esc_url(get_permalink($related_post)); ?>"><?php echo esc_html(get_the_title($related_post)); ?></a></h3>
+                                                    <!-- <time class="single-related-date" datetime="<?php echo esc_attr(get_the_date('c', $related_post)); ?>"><?php echo esc_html(get_the_date('d/m/Y', $related_post)); ?></time> -->
                                                 </div>
                                             </article>
                                         <?php endforeach; ?>
                                     </div>
-                                <?php endif; ?>
-                            </section>
+                                </section>
+                            <?php endif; ?>
                         </aside>
                     </div>
                 </div>

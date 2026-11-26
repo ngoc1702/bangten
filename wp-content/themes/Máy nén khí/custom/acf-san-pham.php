@@ -96,7 +96,7 @@ function caia_render_single_product_price() {
 		$price_html = '<span class="price">Liên hệ</span>';
 	}
 
-	echo '<p class="price caia-product-price">' . wp_kses_post( $price_html ) . '</p>';
+	echo '<p class="price caia-product-price"><span class="caia-product-price__label">Giá:</span> ' . wp_kses_post( $price_html ) . '</p>';
 }
 
 remove_action( 'woocommerce_single_product_summary', 'woocommerce_template_single_title', 5 );

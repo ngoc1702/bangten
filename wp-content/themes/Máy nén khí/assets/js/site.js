@@ -167,10 +167,10 @@ jQuery(function ($) {
   $('.home-news__slider').not('.slick-initialized').each(function () {
     var count = $(this).children('.home-news__card').length;
     $(this).slick({
-      slidesToShow: 4,
-      slidesToScroll: 4,
+      slidesToShow: 3,
+      slidesToScroll: 3,
       arrows: false,
-      dots: count > 4,
+      dots: count > 3,
       infinite: true,
       autoplay: true,
       autoplaySpeed: 5000,
@@ -181,6 +181,27 @@ jQuery(function ($) {
         { breakpoint: 1024, settings: { slidesToShow: 2, slidesToScroll: 2, dots: count > 2 } },
         { breakpoint: 600, settings: { slidesToShow: 1, slidesToScroll: 1, dots: count > 1 } }
       ]
+    });
+  });
+
+  $('.about-clients__slider').not('.slick-initialized').each(function () {
+    var pages = $(this).children('.about-clients__page').length;
+    var $arrows = $(this).closest('.about-clients').find('.about-clients__arrows');
+    $(this).slick({
+      slidesToShow: 1,
+      slidesToScroll: 1,
+      arrows: pages > 1 && $arrows.length > 0,
+      appendArrows: $arrows,
+      dots: pages > 1,
+      prevArrow: '<button type="button" class="about-clients__arrow" aria-label="Trang trước"><i class="fa-solid fa-arrow-left" aria-hidden="true"></i></button>',
+      nextArrow: '<button type="button" class="about-clients__arrow" aria-label="Trang sau"><i class="fa-solid fa-arrow-right" aria-hidden="true"></i></button>',
+      infinite: pages > 1,
+      autoplay: pages > 1,
+      autoplaySpeed: 5000,
+      speed: 500,
+      pauseOnHover: true,
+      pauseOnFocus: true,
+      adaptiveHeight: true
     });
   });
 
@@ -199,4 +220,68 @@ jQuery(function ($) {
       adaptiveHeight: true
     });
   });
+
+  /* Homepage stats: count up from 1 to the CMS number when the section scrolls into view. */
+  (function () {
+    var numbers = document.querySelectorAll('.home-stats__number');
+    if (!numbers.length) return;
+
+    // "18.000+" -> prefix "", value 18000, suffix "+", thousands separator "."
+    function parse(text) {
+      var m = String(text).trim().match(/^(\D*?)(\d[\d.,]*)(.*)$/);
+      if (!m) return null;
+      var raw = m[2];
+      var thousands = /^\d{1,3}([.,]\d{3})+$/.test(raw);
+      var sep = thousands ? raw.charAt(raw.search(/[.,]/)) : '';
+      var value = parseFloat(thousands ? raw.replace(/[.,]/g, '') : raw.replace(',', '.'));
+      if (isNaN(value)) return null;
+      var decimals = thousands ? 0 : ((raw.split(/[.,]/)[1] || '').length);
+      return { prefix: m[1], suffix: m[3], value: value, sep: sep, decimals: decimals, dec: !thousands && raw.indexOf(',') > -1 ? ',' : '.' };
+    }
+
+    function format(n, p) {
+      var s = n.toFixed(p.decimals);
+      if (p.decimals && p.dec === ',') s = s.replace('.', ',');
+      if (p.sep) s = s.replace(/\B(?=(\d{3})+(?!\d))/g, p.sep);
+      return p.prefix + s + p.suffix;
+    }
+
+    function animate(el, p) {
+      var start = Math.min(1, p.value), duration = 1800, t0 = null;
+      function frame(ts) {
+        if (t0 === null) t0 = ts;
+        var t = Math.min((ts - t0) / duration, 1);
+        var eased = 1 - Math.pow(1 - t, 3); // ease-out
+        el.textContent = format(start + (p.value - start) * eased, p);
+        if (t < 1) requestAnimationFrame(frame); else el.textContent = format(p.value, p);
+      }
+      requestAnimationFrame(frame);
+    }
+
+    var items = [];
+    numbers.forEach(function (el) {
+      var p = parse(el.textContent);
+      if (!p) return;
+      el.setAttribute('aria-label', el.textContent.trim()); // screen readers get the final number
+      el.style.minWidth = el.getBoundingClientRect().width + 'px'; // no layout jump while counting
+      items.push({ el: el, p: p });
+    });
+    if (!items.length) return;
+
+    function run(item) { if (reduceMotion) return; animate(item.el, item.p); }
+    if (!reduceMotion) items.forEach(function (i) { i.el.textContent = format(Math.min(1, i.p.value), i.p); });
+
+    if ('IntersectionObserver' in window) {
+      var io = new IntersectionObserver(function (entries) {
+        entries.forEach(function (entry) {
+          if (!entry.isIntersecting) return;
+          io.unobserve(entry.target);
+          items.forEach(function (i) { if (i.el === entry.target) run(i); });
+        });
+      }, { threshold: 0.4 });
+      items.forEach(function (i) { io.observe(i.el); });
+    } else {
+      items.forEach(run);
+    }
+  })();
 });

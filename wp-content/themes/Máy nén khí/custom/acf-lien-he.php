@@ -50,7 +50,7 @@ function caia_register_contact_page_acf_fields() {
 					'label'         => 'Tiêu đề phần thông tin',
 					'name'          => 'contact_title',
 					'type'          => 'text',
-					'default_value' => 'Bửu Liên',
+					'default_value' => 'Công ty TNHH Thọ Lập Hưng Yên',
 				),
 				array(
 					'key'          => 'field_caia_contact_description',

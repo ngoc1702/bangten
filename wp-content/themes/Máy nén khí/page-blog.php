@@ -26,8 +26,17 @@ function caia_news_page_categories() {
 		if ( $term instanceof WP_Term ) { $categories[$term->term_id] = $term; }
 	}
 	if ( ! $categories ) {
-		$terms = get_terms( array( 'taxonomy' => 'category', 'hide_empty' => false, 'exclude' => array( (int) get_option( 'default_category' ) ) ) );
-		$categories = is_wp_error( $terms ) ? array() : $terms;
+		// Every category, default one (Tin tức) first and opened when the page loads. The default category is only skipped while it is still the untouched "Chưa phân loại".
+		$default = get_term( (int) get_option( 'default_category' ), 'category' );
+		$skip    = $default instanceof WP_Term && in_array( $default->slug, array( 'uncategorized', 'chua-phan-loai' ), true ) ? array( $default->term_id ) : array();
+		$terms   = get_terms( array( 'taxonomy' => 'category', 'hide_empty' => false, 'exclude' => $skip ) );
+		$terms   = is_wp_error( $terms ) ? array() : $terms;
+		usort( $terms, function( $a, $b ) use ( $default ) {
+			$ad = $default instanceof WP_Term && $a->term_id === $default->term_id ? 0 : 1;
+			$bd = $default instanceof WP_Term && $b->term_id === $default->term_id ? 0 : 1;
+			return $ad <=> $bd ?: strcasecmp( $a->name, $b->name );
+		} );
+		$categories = $terms;
 	}
 	return array_values( $categories );
 }
@@ -39,7 +48,7 @@ function caia_render_news_page() {
 	$active = $categories ? $categories[0] : null;
 	foreach ( $categories as $term ) { if ( $term->slug === $requested ) { $active = $term; break; } }
 	$paged = isset( $_GET['trang'] ) && is_scalar( $_GET['trang'] ) ? max( 1, absint( $_GET['trang'] ) ) : max( 1, absint( get_query_var( 'paged' ) ), absint( get_query_var( 'page' ) ) );
-	$args = array( 'post_type' => 'post', 'post_status' => 'publish', 'posts_per_page' => 16, 'paged' => $paged, 'ignore_sticky_posts' => true );
+	$args = array( 'post_type' => 'post', 'post_status' => 'publish', 'posts_per_page' => 12, 'paged' => $paged, 'ignore_sticky_posts' => true );
 	if ( $active ) { $args['cat'] = $active->term_id; }
 	$query = new WP_Query( $args );
 	?>
