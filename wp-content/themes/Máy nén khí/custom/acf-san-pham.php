@@ -13,20 +13,20 @@ function caia_register_product_specification_fields() {
 	acf_add_local_field_group(
 		array(
 			'key'   => 'group_caia_product_specifications',
-			'title' => 'Đặc điểm kỹ thuật',
+			'title' => 'Thông số kỹ thuật',
 			'fields' => array(
 				array(
 					'key'          => 'field_caia_product_specifications',
 					'label'        => 'Bảng thông số',
 					'name'         => 'product_specifications',
 					'type'         => 'repeater',
-					'instructions' => 'Bấm "Thêm hàng" để thêm đặc điểm và thông số. Có thể kéo thả để đổi thứ tự.',
+					'instructions' => 'Bấm "Thêm hàng" để thêm dòng thông số (hiện ở cột phải cạnh Mô tả sản phẩm). Có thể kéo thả để đổi thứ tự.',
 					'layout'       => 'table',
 					'button_label' => 'Thêm hàng',
 					'sub_fields'   => array(
 						array(
 							'key'      => 'field_caia_product_specification_name',
-							'label'    => 'Tên đặc điểm',
+							'label'    => 'Tên thông số',
 							'name'     => 'name',
 							'type'     => 'text',
 							'required' => 1,
@@ -34,7 +34,7 @@ function caia_register_product_specification_fields() {
 						),
 						array(
 							'key'      => 'field_caia_product_specification_value',
-							'label'    => 'Thông số',
+							'label'    => 'Giá trị',
 							'name'     => 'value',
 							'type'     => 'text',
 							'required' => 1,
@@ -120,49 +120,58 @@ function caia_remove_single_product_share_buttons() {
 }
 add_action( 'wp', 'caia_remove_single_product_share_buttons' );
 
-/** Replaces WooCommerce tabs with a compact, accessible product-description accordion. */
-function caia_render_product_description_accordion() {
-	$product_id  = get_the_ID();
-	$description = get_post_field( 'post_content', $product_id );
-
-	if ( trim( $description ) === '' ) {
-		return;
+/** Rows of the technical-specification repeater, empty rows removed. */
+function caia_get_product_specification_rows() {
+	if ( ! function_exists( 'get_field' ) ) {
+		return array();
 	}
 
-	echo '<details class="product-accordion product-accordion--description" open>';
-	echo '<summary>Mô tả sản phẩm</summary>';
-	echo '<div class="product-accordion__content product-description__content">';
-	echo apply_filters( 'the_content', $description ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-	echo '</div>';
-	echo '</details>';
+	$rows = get_field( 'product_specifications', get_the_ID() );
+	if ( ! is_array( $rows ) ) {
+		return array();
+	}
+
+	return array_values(
+		array_filter(
+			$rows,
+			function( $row ) {
+				return '' !== trim( (string) ( $row['name'] ?? '' ) ) || '' !== trim( (string) ( $row['value'] ?? '' ) );
+			}
+		)
+	);
 }
 
-/** Displays the technical-specification table alongside the product images. */
-function caia_render_product_specifications() {
-	if ( ! function_exists( 'have_rows' ) || ! have_rows( 'product_specifications' ) ) {
+/** Replaces WooCommerce tabs: description on the left, sticky technical specifications on the right. */
+function caia_render_product_body() {
+	$description = trim( (string) get_post_field( 'post_content', get_the_ID() ) );
+	$specs       = caia_get_product_specification_rows();
+
+	if ( '' === $description && empty( $specs ) ) {
 		return;
 	}
 
-	echo '<div class="product-specifications"><table class="product-specifications__table"><tbody>';
+	echo '<div class="product-body' . ( '' !== $description && ! empty( $specs ) ? ' product-body--with-specs' : '' ) . '">';
 
-	while ( have_rows( 'product_specifications' ) ) {
-		the_row();
-		$name  = get_sub_field( 'name' );
-		$value = get_sub_field( 'value' );
-
-		if ( '' === trim( (string) $name ) && '' === trim( (string) $value ) ) {
-			continue;
-		}
-
-		echo '<tr>';
-		echo '<th scope="row">' . esc_html( $name ) . '</th>';
-		echo '<td>' . esc_html( $value ) . '</td>';
-		echo '</tr>';
+	if ( '' !== $description ) {
+		echo '<div class="product-body__main"><details class="product-accordion product-accordion--description" open>';
+		echo '<summary>Mô tả sản phẩm</summary>';
+		echo '<div class="product-accordion__content product-description__content">';
+		echo apply_filters( 'the_content', $description ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+		echo '</div></details></div>';
 	}
 
-	echo '</tbody></table></div>';
+	if ( ! empty( $specs ) ) {
+		echo '<aside class="product-body__aside" aria-label="Thông số kỹ thuật"><details class="product-accordion product-accordion--specs" open>';
+		echo '<summary>Thông số kỹ thuật</summary>';
+		echo '<div class="product-accordion__content product-specifications"><table class="product-specifications__table"><tbody>';
+		foreach ( $specs as $row ) {
+			echo '<tr><th scope="row">' . esc_html( $row['name'] ?? '' ) . '</th><td>' . esc_html( $row['value'] ?? '' ) . '</td></tr>';
+		}
+		echo '</tbody></table></div></details></aside>';
+	}
+
+	echo '</div>';
 }
 
 remove_action( 'woocommerce_after_single_product_summary', 'woocommerce_output_product_data_tabs', 10 );
-add_action( 'woocommerce_after_single_product_summary', 'caia_render_product_description_accordion', 10 );
-add_action( 'woocommerce_single_product_summary', 'caia_render_product_specifications', 25 );
+add_action( 'woocommerce_after_single_product_summary', 'caia_render_product_body', 10 );

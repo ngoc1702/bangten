@@ -54,6 +54,7 @@ jQuery(function ($) {
       panels.forEach(function (panel) {
         panel.hidden = panel.id !== tab.getAttribute('aria-controls');
       });
+      window.dispatchEvent(new Event('resize')); // refresh slider arrows of the newly shown panel
       if (allProducts) {
         allProducts.href = tab.dataset.categoryUrl;
         allProducts.setAttribute('aria-label', 'Xem tất cả sản phẩm trong ' + tab.dataset.categoryName);
@@ -99,6 +100,52 @@ jQuery(function ($) {
   };
   updateHeaderState();
   $(window).on('scroll', updateHeaderState);
+
+  /* Sticky product specs: sit just below whatever part of the fixed header is on screen. */
+  var specsAside = document.querySelector('.product-body__aside');
+  var updateSpecsOffset = function () {
+    if (!specsAside) return;
+    var bottom = 0;
+    document.querySelectorAll('.header-menusub-widget-area, .site-header').forEach(function (el) {
+      var rect = el.getBoundingClientRect();
+      if (rect.height > 0) bottom = Math.max(bottom, rect.bottom);
+    });
+    specsAside.style.setProperty('--specs-top', Math.ceil(bottom + 16) + 'px');
+  };
+  updateSpecsOffset();
+  var specsTimer;
+  $(window).on('scroll resize', function () {
+    updateSpecsOffset();
+    clearTimeout(specsTimer);
+    specsTimer = setTimeout(updateSpecsOffset, 260); // after the header slide finishes
+  });
+  setTimeout(updateSpecsOffset, 300);
+
+  /* Homepage product slider: arrows scroll one page; disable them at either end. */
+  document.querySelectorAll('.home-products__slider.is-slider').forEach(function (slider) {
+    var track = slider.querySelector('.home-products__grid');
+    var prev = slider.querySelector('.home-products__arrow--prev');
+    var next = slider.querySelector('.home-products__arrow--next');
+    if (!track || !prev || !next) return;
+    var update = function () {
+      if (!track.clientWidth) return; // hidden tab panel
+      prev.disabled = track.scrollLeft <= 2;
+      next.disabled = track.scrollLeft + track.clientWidth >= track.scrollWidth - 2;
+    };
+    var page = function (dir) {
+      track.scrollBy({ left: dir * track.clientWidth, behavior: reduceMotion ? 'auto' : 'smooth' });
+    };
+    prev.addEventListener('click', function () { page(-1); });
+    next.addEventListener('click', function () { page(1); });
+    track.addEventListener('scroll', update, { passive: true });
+    window.addEventListener('resize', update);
+    update();
+  });
+
+  /* Fixed contact buttons: return to the top of the page. */
+  $('.content-fix__top').on('click', function () {
+    $('html, body').stop(true).animate({ scrollTop: 0 }, reduceMotion ? 0 : 500);
+  });
 
   /* Smooth scrolling for same-page anchors. */
   $(document).on('click', 'a[href*="#"]:not([href="#"])', function (event) {

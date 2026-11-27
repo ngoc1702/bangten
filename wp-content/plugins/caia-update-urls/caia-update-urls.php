@@ -22,175 +22,161 @@ function CaiaUU_load_textdomain(){
 }
 
 
+/** True when both values are full http(s) URLs (needed before touching structured data). */
+function caia_uu_is_url_pair($oldurl, $newurl){
+	return ( strpos($oldurl, 'http://') === 0 || strpos($oldurl, 'https://') === 0 )
+		&& ( strpos($newurl, 'http://') === 0 || strpos($newurl, 'https://') === 0 );
+}
+
+/** Replace in a plain string, also covering the JSON-escaped (http:\/\/host) and URL-encoded forms. */
+function caia_uu_replace_string($str, $oldurl, $newurl, &$cnt = 0){
+	$pairs = array(
+		array($oldurl, $newurl),
+		array(str_replace('/', '\/', $oldurl), str_replace('/', '\/', $newurl)),
+		array(rawurlencode($oldurl), rawurlencode($newurl)),
+	);
+	foreach ($pairs as $pair){
+		if ($pair[0] === '' || $pair[0] === $pair[1]) continue;
+		$n = substr_count($str, $pair[0]);
+		if ($n){
+			$str = str_replace($pair[0], $pair[1], $str);
+			$cnt += $n;
+		}
+	}
+	return $str;
+}
+
+/** Replace inside one (possibly serialized) value. Returns the number of replacements; $value is updated in place. */
+function caia_uu_replace_value(&$value, $oldurl, $newurl){
+	if (!is_string($value) || $value === '') return 0;
+	if (is_serialized($value)){
+		// Serialized objects cannot be edited safely as text, so leave them alone.
+		if (preg_match('/(^|;|\{)O:\d+:"/', $value)) return 0;
+		$data = @unserialize($value);
+		if ($data === false && $value !== 'b:0;') return 0;
+		$cnt = caia_replace_inside_var($data, $oldurl, $newurl);
+		if ($cnt) $value = serialize($data);
+		return $cnt;
+	}
+	$cnt = 0;
+	$new = caia_uu_replace_string($value, $oldurl, $newurl, $cnt);
+	if ($cnt) $value = $new;
+	return $cnt;
+}
+
 function CVB_update_widget($oldurl, $newurl){
-	// support widget text and caia ads widget
-
+	global $wpdb;
 	$count = 0;
-	// widget_text
-	$option_name = 'widget_text';
-	$widget_arr = get_option( $option_name , '' );
-	$before = $count;
-	foreach ($widget_arr as $key => $widget) {		
-		$cnt = substr_count($widget['text'], $oldurl);
-		if ($cnt){
-			$widget_arr[$key]['text'] = str_replace($oldurl, $newurl, $widget['text']);
-			$count += $cnt;	
-		}
-		
-	}
+	$is_url = caia_uu_is_url_pair($oldurl, $newurl);
 
-	if($count > $before){
-		update_option( $option_name, $widget_arr );
-	}
-	
-	
-
-	// widget_ads_widget
-	$option_name = 'widget_ads_widget';
-	$widget_arr = get_option( $option_name , '' );
-	$before = $count;
-	foreach ($widget_arr as $key => $widget) {			
-		$cnt = substr_count($widget['text'], $oldurl);
+	// Every widget type is stored in a widget_* option: text, custom HTML, image, media, caia widgets...
+	$names = $wpdb->get_col( "SELECT option_name FROM {$wpdb->options} WHERE option_name LIKE 'widget\\_%'" );
+	foreach ($names as $option_name){
+		// Plain-text replacement (non-URL strings) was only ever allowed for the text and ads widgets.
+		if (!$is_url && !in_array($option_name, array('widget_text', 'widget_ads_widget'), true)) continue;
+		$widget_arr = get_option($option_name, '');
+		if (!is_array($widget_arr)) continue;
+		$cnt = caia_replace_inside_var($widget_arr, $oldurl, $newurl);
 		if ($cnt){
-			$widget_arr[$key]['text'] = str_replace($oldurl, $newurl, $widget['text']);
-			$count += $cnt;	
+			update_option($option_name, $widget_arr);
+			$count += $cnt;
 		}
 	}
-	if($count > $before){
-		update_option( $option_name, $widget_arr );
-	}
-	
-
-	// bat dau cam replace voi noi dung ko phai url
-	if  (( strpos($oldurl, 'http://') !== 0 && strpos($oldurl, 'https://') !== 0) ||
-		( strpos($newurl, 'http://') !== 0 && strpos($newurl, 'https://') !== 0)){		
-		return 0;
-	}	
-
-	// widget_image-upload-widget
-	$option_name = 'widget_image-upload-widget';
-	$widget_arr = get_option( $option_name , '' );
-	$cnt = caia_replace_inside_var($widget_arr, $oldurl, $newurl);
-	if ($cnt){
-		update_option( $option_name, $widget_arr );
-		$count += $cnt;
-	}	
-	
-	
 	return $count;
 }
 
+/** Theme/plugin settings and every other option (theme_mods_*, ACF options, caia-*): URL replacement only. */
 function CVB_update_caia_settings($oldurl, $newurl){
-	if  (( strpos($oldurl, 'http://') !== 0 && strpos($oldurl, 'https://') !== 0) ||
-		( strpos($newurl, 'http://') !== 0 && strpos($newurl, 'https://') !== 0)){		
-		return 0;
-	}	
+	global $wpdb;
+	if (!caia_uu_is_url_pair($oldurl, $newurl)) return 0;
 
 	$count = 0;
-	// caia-settings
-	$option_name = 'caia-settings';
-	$val = get_option( $option_name , '' );
-	$cnt = caia_replace_inside_var($val, $oldurl, $newurl);
-	if ($cnt){
-		update_option($option_name, $val);
-		$count += $cnt;
+	$rows = $wpdb->get_results( $wpdb->prepare(
+		"SELECT option_name, option_value FROM {$wpdb->options}
+		 WHERE option_value LIKE %s
+		 AND option_name NOT LIKE '\\_transient%%' AND option_name NOT LIKE '\\_site\\_transient%%'
+		 AND option_name NOT LIKE 'widget\\_%%'
+		 AND option_name NOT IN ('siteurl', 'home')",
+		'%' . $wpdb->esc_like( parse_url($oldurl, PHP_URL_HOST) ) . '%'
+	), ARRAY_A );
+	foreach ($rows as $row){
+		$value = $row['option_value'];
+		$cnt = caia_uu_replace_value($value, $oldurl, $newurl);
+		if ($cnt){
+			$wpdb->update($wpdb->options, array('option_value' => $value), array('option_name' => $row['option_name']));
+			wp_cache_delete($row['option_name'], 'options');
+			$count += $cnt;
+		}
 	}
-	
-
-	// caia-layout-settings
-	$option_name = 'caia-layout-settings';
-	$val = get_option( $option_name , '' );
-	$cnt = caia_replace_inside_var($val, $oldurl, $newurl);
-	if ($cnt){
-		update_option($option_name, $val);
-		$count += $cnt;
-	}
-
-	// caia-design-settings
-	$option_name = 'caia-design-settings';
-	$val = get_option( $option_name , '' );
-	$cnt = caia_replace_inside_var($val, $oldurl, $newurl);
-	if ($cnt){
-		update_option($option_name, $val);
-		$count += $cnt;
-	}
-
-
-	return $count;		
+	wp_cache_delete('alloptions', 'options');
+	return $count;
 }
 
 function CVB_update_caia_context($oldurl, $newurl){
-
-
-	if  (( strpos($oldurl, 'http://') !== 0 && strpos($oldurl, 'https://') !== 0) ||
-		( strpos($newurl, 'http://') !== 0 && strpos($newurl, 'https://') !== 0)){		
-		return 0;
-	}	
+	if (!caia_uu_is_url_pair($oldurl, $newurl)) return 0;
 
 	$my_settings = get_option('caia_context_settings');
-	
 	if ( empty($my_settings) ) return 0;
 
 	$count = caia_replace_inside_var($my_settings, $oldurl, $newurl, array('code'));
-
 	if ($count){
 		update_option('caia_context_settings', $my_settings);
 	}
-	
+	return $count;
+}
+
+/** Site Address / WordPress Address options (kept apart so they are only changed when asked). */
+function CVB_update_site_address($oldurl, $newurl){
+	$count = 0;
+	foreach (array('siteurl', 'home') as $name){
+		$value = get_option($name);
+		if (is_string($value) && strpos($value, $oldurl) !== false){
+			update_option($name, str_replace($oldurl, $newurl, $value));
+			$count++;
+		}
+	}
+	return $count;
+}
+
+/** Serialized/JSON values in a *meta table (postmeta, termmeta, usermeta). */
+function caia_uu_replace_meta_table($table, $id_col, $meta_id_col, $oldurl, $newurl, $serialized_only){
+	global $wpdb;
+	$like = '%' . $wpdb->esc_like($oldurl) . '%';
+	$esc  = '%' . $wpdb->esc_like(str_replace('/', '\/', $oldurl)) . '%';
+	$rows = $wpdb->get_results( $wpdb->prepare("SELECT $meta_id_col AS mid, meta_value FROM $table WHERE (meta_value LIKE %s OR meta_value LIKE %s)", $like, $esc), ARRAY_A );
+	$count = 0;
+	foreach ($rows as $row){
+		$is_ser = is_serialized($row['meta_value']);
+		if ($serialized_only !== $is_ser) continue;
+		$value = $row['meta_value'];
+		$cnt = caia_uu_replace_value($value, $oldurl, $newurl);
+		if ($cnt){
+			$wpdb->update($table, array('meta_value' => $value), array($meta_id_col => $row['mid']));
+			$count += $cnt;
+		}
+	}
 	return $count;
 }
 
 function caia_replace_meta_array($oldurl, $newurl){
 	global $wpdb;
-	$sql = "SELECT * FROM {$wpdb->postmeta} WHERE meta_key not like '_wp_%' and meta_key <> '_menu_item_classes' and meta_value LIKE 'a:%'";
-	$rows = $wpdb->get_results($sql, ARRAY_A);
-	$count = 0;	
-	foreach ($rows as $row) {
-		$post_id = $row['post_id'];
-		$meta_key = $row['meta_key'];		
-		$meta_value = unserialize($row['meta_value']);
-		// print_r($meta_value);
-		if (is_array($meta_value)){
-			$count += caia_replace_inside_var($meta_value, $oldurl, $newurl);		
-			if ($count){				
-				$res = update_post_meta($post_id, $meta_key, $meta_value);
-			}
-		}
-	}
-	return $count;
+	return caia_uu_replace_meta_table($wpdb->postmeta, 'post_id', 'meta_id', $oldurl, $newurl, true);
 }
 
 function caia_replace_meta_term_array($oldurl, $newurl){
 	global $wpdb;
-	$sql = "SELECT * FROM {$wpdb->termmeta} WHERE meta_key not like '_wp_%' and meta_key <> '_menu_item_classes' and meta_value LIKE 'a:%'";
-	$rows = $wpdb->get_results($sql, ARRAY_A);
-	$count = 0;	
-	foreach ($rows as $row) {
-		$post_id = $row['post_id'];
-		$meta_key = $row['meta_key'];		
-		$meta_value = unserialize($row['meta_value']);
-		// print_r($meta_value);
-		if (is_array($meta_value)){
-			$count += caia_replace_inside_var($meta_value, $oldurl, $newurl);		
-			if ($count){				
-				$res = update_term_meta($post_id, $meta_key, $meta_value);
-			}
-		}
-	}
-	return $count;
+	return caia_uu_replace_meta_table($wpdb->termmeta, 'term_id', 'meta_id', $oldurl, $newurl, true);
 }
 
 function caia_replace_inside_var( &$var, $oldurl, $newurl, $match_key_arr = array(), $my_key = '')
 {
 	if (is_string($var)){
-		if ($my_key = '' || empty($match_key_arr) || in_array($my_key, $match_key_arr)){
-			$cnt = substr_count($var, $oldurl);
-			$var = str_replace($oldurl, $newurl, $var);
+		if ($my_key === '' || empty($match_key_arr) || in_array($my_key, $match_key_arr)){
+			$cnt = 0;
+			$var = caia_uu_replace_string($var, $oldurl, $newurl, $cnt);
 			return $cnt;
-		}else{
-			return 0;
-		}		
-
+		}
+		return 0;
 	}else if (is_array($var)){
 		$count = 0;
 		foreach ($var as $key => $value) {
@@ -200,7 +186,7 @@ function caia_replace_inside_var( &$var, $oldurl, $newurl, $match_key_arr = arra
 		}
 		return $count;
 	}else{
-		// neu ko phai string hoac array thi ko lam gi
+		// Not a string or an array: nothing to replace.
 		return 0;
 	}
 }
@@ -221,26 +207,41 @@ function CaiaUU_options_page(){
 		foreach($options as $option){
 			if ($option == 'widgets'){
 				$result = CVB_update_widget($oldurl, $newurl);
-				$results[$option] = array($result, $option);
-			
+				$results[$option] = array($result, 'Widgets (all widget types)');
+
 			}else if ($option == 'caia-theme-settings'){
 				$result = CVB_update_caia_settings($oldurl, $newurl);
-				$results[$option] = array($result, $option);
-			
+				$results[$option] = array($result, 'Theme, ACF and plugin options');
+
+			}else if ($option == 'siteaddress'){
+				$result = CVB_update_site_address($oldurl, $newurl);
+				$results[$option] = array($result, 'Site Address / WordPress Address (siteurl, home)');
+
+			}else if ($option == 'usermeta'){
+				$result = caia_uu_replace_meta_table($wpdb->usermeta, 'user_id', 'umeta_id', $oldurl, $newurl, true) + caia_uu_replace_meta_table($wpdb->usermeta, 'user_id', 'umeta_id', $oldurl, $newurl, false);
+				$results[$option] = array($result, 'User meta');
+
+			}else if ($option == 'comments'){
+				$result = $wpdb->query( $wpdb->prepare("UPDATE $wpdb->comments SET comment_content = replace(comment_content, %s, %s), comment_author_url = replace(comment_author_url, %s, %s)", $oldurl, $newurl, $oldurl, $newurl) );
+				$results[$option] = array($result, 'Comments');
+
 			}else if ($option == 'plugins'){
 				$result = CVB_update_caia_context($oldurl, $newurl);
 				$results[$option] = array($result, $option);
 
 			}else if ($option == 'custom'){
-				$count = caia_replace_meta_array($oldurl, $newurl);				
-				$result = $wpdb->query( $wpdb->prepare( $queries[$option][0], $oldurl, $newurl) );
-				$results[$option] = array($result + $count, $queries[$option][1]);
+				// Serialized and plain/JSON values are both handled in PHP so escaped URLs are covered too.
+				$count = caia_replace_meta_array($oldurl, $newurl) + caia_uu_replace_meta_table($wpdb->postmeta, 'post_id', 'meta_id', $oldurl, $newurl, false);
+				$results[$option] = array($count, $queries[$option][1]);
 			}else if ($option == 'customterm'){
-				$count = caia_replace_meta_term_array($oldurl, $newurl);				
-				$result = $wpdb->query( $wpdb->prepare( $queries[$option][0], $oldurl, $newurl) );
-				$results[$option] = array($result + $count, $queries[$option][1]);
+				$count = caia_replace_meta_term_array($oldurl, $newurl) + caia_uu_replace_meta_table($wpdb->termmeta, 'term_id', 'meta_id', $oldurl, $newurl, false);
+				$results[$option] = array($count, $queries[$option][1]);
 			}else{
 				$result = $wpdb->query( $wpdb->prepare( $queries[$option][0], $oldurl, $newurl) );
+				if (in_array($option, array('content', 'excerpts'), true)){
+					// Also cover JSON-escaped URLs (http:\/\/host) stored in block/builder markup.
+					$result += $wpdb->query( $wpdb->prepare( $queries[$option][0], str_replace('/', '\/', $oldurl), str_replace('/', '\/', $newurl) ) );
+				}
 				$results[$option] = array($result, $queries[$option][1]);
 			}
 		}
@@ -339,11 +340,15 @@ function CaiaUU_options_page(){
 <input name="VBUU_update_links[]" type="checkbox" id="VBUU_update_true" value="custom" /> <label for="VBUU_update_true"><strong><?php _e('URLs in custom fields and meta boxes','update-urls'); ?></strong></label><br/>
 <input name="VBUU_update_links[]" type="checkbox" id="VBUU_update_true" value="customterm" /> <label for="VBUU_update_true"><strong><?php _e('URLs in custom fields and meta term boxes','update-urls'); ?></strong></label><br/>
 
-<input name="VBUU_update_links[]" type="checkbox" id="VBUU_update_true" value="widgets" /> <label for="VBUU_update_true"><strong><?php _e('URLs in text/ads widget','update-urls'); ?></strong> <i>(only Text Widget, Caia Ads Widget and Caia Upload Image Widget)</i></label><br/>
+<input name="VBUU_update_links[]" type="checkbox" id="VBUU_update_true" value="widgets" /> <label for="VBUU_update_true"><strong><?php _e('URLs in text/ads widget','update-urls'); ?></strong> <i>(all widget types: text, custom HTML, image, media, Caia widgets)</i></label><br/>
 
 <input name="VBUU_update_links[]" type="checkbox" id="VBUU_update_true" value="plugins" /> <label for="VBUU_update_true"><strong><?php _e('URLs in plugins settings','update-urls'); ?></strong> <i>(only Caia Context)</i></label><br/>
 
-<input name="VBUU_update_links[]" type="checkbox" id="VBUU_update_true" value="caia-theme-settings" /> <label for="VBUU_update_true"><strong><?php _e('URLs in Caia child theme settings','update-urls'); ?></strong></label><br/>
+<input name="VBUU_update_links[]" type="checkbox" id="VBUU_update_true" value="caia-theme-settings" /> <label for="VBUU_update_true"><strong><?php _e('URLs in theme, ACF and plugin options','update-urls'); ?></strong> <i>(theme_mods, ACF options, Caia settings and every other option)</i></label><br/>
+
+<input name="VBUU_update_links[]" type="checkbox" id="VBUU_update_true" value="usermeta" /> <label for="VBUU_update_true"><strong>URLs in user meta</strong></label><br/>
+<input name="VBUU_update_links[]" type="checkbox" id="VBUU_update_true" value="comments" /> <label for="VBUU_update_true"><strong>URLs in comments</strong></label><br/>
+<input name="VBUU_update_links[]" type="checkbox" id="VBUU_update_true" value="siteaddress" /> <label for="VBUU_update_true"><strong>Site Address and WordPress Address</strong> <i>(options siteurl, home)</i></label><br/>
 
 <input name="VBUU_update_links[]" type="checkbox" id="VBUU_update_true" value="guids" /> <label for="VBUU_update_true"><strong><?php _e('Update ALL GUIDs','update-urls'); ?></strong> <span class="description" style="color:#f00;"><?php _e('GUIDs for posts should only be changed on development sites.','update-urls'); ?></span> <a href="http://www.velvetblues.com/go/guids/" target="_blank"><?php _e('Learn More.','update-urls'); ?></a></label><br/>
 </p></td></tr></table>

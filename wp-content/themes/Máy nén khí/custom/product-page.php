@@ -19,7 +19,7 @@ class Caia_Product_Contact_Widget extends WP_Widget {
 		echo $args['before_widget']; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 		echo '<div class="product-contact__buttons">';
 		if ( $zalo ) {
-			echo '<a class="product-contact__button product-contact__button--zalo" href="' . esc_url( 'https://zalo.me/' . $zalo ) . '" target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-comment-dots" aria-hidden="true"></i>' . esc_html( ! empty( $instance['zalo_label'] ) ? $instance['zalo_label'] : 'Nhận báo giá qua Zalo' ) . '</a>';
+			echo '<a class="product-contact__button product-contact__button--zalo" href="' . esc_url( 'https://zalo.me/' . $zalo ) . '" target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-comment-dots" aria-hidden="true"></i>' . esc_html( ! empty( $instance['zalo_label'] ) ? $instance['zalo_label'] : 'Zalo' ) . '</a>';
 		}
 		if ( $phone_href ) {
 			echo '<a class="product-contact__button product-contact__button--phone" href="' . esc_url( 'tel:' . $phone_href ) . '"><i class="fa-solid fa-phone" aria-hidden="true"></i>' . esc_html( ! empty( $instance['phone_label'] ) ? $instance['phone_label'] : $phone ) . '</a>';
@@ -31,7 +31,7 @@ class Caia_Product_Contact_Widget extends WP_Widget {
 	public function form( $instance ) {
 		$fields = array( 'phone' => 'Số điện thoại gọi', 'zalo' => 'Số điện thoại Zalo', 'zalo_label' => 'Chữ nút Zalo', 'phone_label' => 'Chữ nút gọi (để trống dùng số điện thoại)' );
 		foreach ( $fields as $key => $label ) {
-			$value = $instance[ $key ] ?? ( $key === 'zalo_label' ? 'Nhận báo giá qua Zalo' : '' );
+			$value = $instance[ $key ] ?? ( $key === 'zalo_label' ? 'Zalo' : '' );
 			?>
 			<p><label for="<?php echo esc_attr( $this->get_field_id( $key ) ); ?>"><?php echo esc_html( $label ); ?></label><input class="widefat" id="<?php echo esc_attr( $this->get_field_id( $key ) ); ?>" name="<?php echo esc_attr( $this->get_field_name( $key ) ); ?>" type="text" value="<?php echo esc_attr( $value ); ?>"></p>
 			<?php
@@ -111,7 +111,7 @@ function caia_product_contact() {
 }
 
 function caia_product_section_heading( $title ) {
-	echo '<h2 class="home-products__heading">' . esc_html( $title ) . '</h2><img class="home-section-heading__ornament" src="' . esc_url( get_stylesheet_directory_uri() . '/images/img-heading.png' ) . '" width="200" height="68" alt="" aria-hidden="true">';
+	echo '<h2 class="home-products__heading">' . esc_html( $title ) . '</h2><img class="home-section-heading__ornament" src="' . esc_url( caia_ornament_url() ) . '" width="200" height="68" alt="" aria-hidden="true">';
 }
 
 function caia_product_commitments() {
@@ -153,6 +153,12 @@ function caia_product_related() {
 		return $item instanceof WC_Product && $item->get_id() !== $current_id && $item->get_status() === 'publish' && $item->is_visible();
 	} );
 	$items = array_slice( $items, 0, 4 );
+	// Top up with the newest products from the same categories when WooCommerce finds fewer than 4.
+	if ( count( $items ) < 4 ) {
+		$have  = array_merge( array( $current_id ), array_map( function( $i ) { return $i->get_id(); }, $items ) );
+		$extra = wc_get_products( array( 'status' => 'publish', 'visibility' => 'catalog', 'limit' => 4 - count( $items ), 'exclude' => $have, 'category' => wp_list_pluck( wc_get_product_terms( $current_id, 'product_cat' ), 'slug' ), 'orderby' => 'date', 'order' => 'DESC' ) );
+		$items = array_merge( array_values( $items ), $extra );
+	}
 	if ( ! $items ) {
 		return;
 	}

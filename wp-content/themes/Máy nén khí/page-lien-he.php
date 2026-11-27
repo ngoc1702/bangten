@@ -74,7 +74,7 @@ function caia_render_contact_page() {
 				<section class="contact-page__details" aria-labelledby="contact-page-title">
 					<?php if ( $title ) : ?>
 						<h2 id="contact-page-title"><?php echo esc_html( $title ); ?></h2>
-						<img class="contact-page__ornament" src="<?php echo esc_url( get_stylesheet_directory_uri() . '/images/img-heading.png' ); ?>" width="200" height="68" alt="" aria-hidden="true" decoding="async">
+						<img class="contact-page__ornament" src="<?php echo esc_url( caia_ornament_url() ); ?>" width="200" height="68" alt="" aria-hidden="true" decoding="async">
 					<?php endif; ?>
 					<?php if ( $description ) : ?>
 						<p class="contact-page__intro"><?php echo nl2br( esc_html( $description ) ); ?></p>

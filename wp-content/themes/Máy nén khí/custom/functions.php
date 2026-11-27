@@ -199,16 +199,14 @@ function caia_add_html_widget_title( $title ) {
 }
 
 
-/** Montserrat is the only web font in use; one variable request covers weights 300–800. */
+/** Geist is the only web font used (one variable-font request); FontAwesome solid is preloaded because icons appear above the fold. */
 add_action( 'wp_head', 'caia_add_font_website', 1 );
 function caia_add_font_website() {
 	?>
 	<link rel="preconnect" href="https://fonts.googleapis.com">
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-	<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&display=swap" rel="stylesheet">
-	<link href="https://fonts.googleapis.com/css2?family=Archivo:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
 	<link href="https://fonts.googleapis.com/css2?family=Geist:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
-	<link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,300..800;1,400..600&display=swap" rel="stylesheet">
+	<link rel="preload" href="<?php echo esc_url( CHILD_URL . '/assets/fontawesome/webfonts/fa-solid-900.woff2' ); ?>" as="font" type="font/woff2" crossorigin>
 	<?php
 }
 
@@ -400,8 +398,11 @@ function caia_add_content_after_footer2(){
 add_action('genesis_after_footer','caia_add_content_fix');
 function caia_add_content_fix(){
 	if( is_active_sidebar( 'content-fix' ) ){
+		// The fixed contact stack includes its own always-visible back-to-top button.
+		remove_action( 'genesis_after_footer', 'caia_show_back_to_top' );
 		echo '<div class="content-fix">';
-			dynamic_sidebar( 'Toàn bộ - Nội dung cố định' );		
+			dynamic_sidebar( 'content-fix' );
+			echo '<button type="button" class="content-fix__top" aria-label="Lên đầu trang" title="Lên đầu trang"><span aria-hidden="true"></span></button>';
 		echo '</div>';
 	}
 }
@@ -656,4 +657,10 @@ function my_column_width() {
 add_action( 'wp_enqueue_scripts', 'add_fontawesome_to_theme' );
 function add_fontawesome_to_theme() {
 	wp_enqueue_style( 'font-awesome', CHILD_URL . '/assets/fontawesome/css/all.min.css', array(), '6.5.0' );
+}
+
+/** Heading ornament URL with a file-time version so a replaced image is never served from browser cache. */
+function caia_ornament_url() {
+	$file = get_stylesheet_directory() . '/images/img-heading.png';
+	return add_query_arg( 'v', file_exists( $file ) ? filemtime( $file ) : 1, get_stylesheet_directory_uri() . '/images/img-heading.png' );
 }

@@ -269,6 +269,7 @@
   }
   .catalog-toolbar #catalog-orderby {
     min-height: 44px;
+    font-size: 14px !important; /* beats the generic 16px mobile field rule */
   }
   .catalog-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));

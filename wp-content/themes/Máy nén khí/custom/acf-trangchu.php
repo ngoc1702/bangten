@@ -327,7 +327,7 @@ function caia_render_home_categories( $page_id ) {
 		<div class="wrap">
 			<header class="home-categories__header">
 				<h2 id="home-categories-title" class="home-categories__heading"><?php echo esc_html( $title ); ?></h2>
-				<img class="home-section-heading__ornament" src="<?php echo esc_url( get_stylesheet_directory_uri() . '/images/img-heading.png' ); ?>" width="200" height="68" alt="" aria-hidden="true" decoding="async">
+				<img class="home-section-heading__ornament" src="<?php echo esc_url( caia_ornament_url() ); ?>" width="200" height="68" alt="" aria-hidden="true" decoding="async">
 			</header>
 			<ul class="home-categories__grid" role="list">
 				<?php foreach ( $terms as $term ) :
@@ -493,10 +493,19 @@ function caia_render_home_product_sections( $page_id ) {
 					$products = $tab['products'];
 					?>
 					<div class="home-products__panel" id="<?php echo esc_attr( $prefix . '-panel-' . $term->term_id ); ?>"<?php if ( $has_child_tabs ) : ?> role="tabpanel" aria-labelledby="<?php echo esc_attr( $prefix . '-tab-' . $term->term_id ); ?>" tabindex="0"<?php endif; ?><?php echo $tab_index === 0 ? '' : ' hidden'; ?>>
-							<div class="home-products__grid">
-								<?php foreach ( $products as $product ) : ?>
-									<?php caia_render_product_card( $product, $term ); ?>
-								<?php endforeach; ?>
+							<?php $is_slider = count( $products ) > 4; ?>
+							<div class="home-products__slider<?php echo $is_slider ? ' is-slider' : ''; ?>">
+								<?php if ( $is_slider ) : ?>
+									<button type="button" class="home-products__arrow home-products__arrow--prev" aria-label="Sản phẩm trước" disabled><i class="fa-solid fa-chevron-left" aria-hidden="true"></i></button>
+								<?php endif; ?>
+								<div class="home-products__grid">
+									<?php foreach ( $products as $product ) : ?>
+										<?php caia_render_product_card( $product, $term ); ?>
+									<?php endforeach; ?>
+								</div>
+								<?php if ( $is_slider ) : ?>
+									<button type="button" class="home-products__arrow home-products__arrow--next" aria-label="Sản phẩm sau"><i class="fa-solid fa-chevron-right" aria-hidden="true"></i></button>
+								<?php endif; ?>
 							</div>
 					</div>
 				<?php endforeach; ?>
@@ -556,7 +565,7 @@ function caia_render_home_reviews( $page_id ) {
 				<header class="home-reviews__header">
 					<?php if ( $title ) : ?>
 						<h2 class="home-reviews__heading"><?php echo esc_html( $title ); ?></h2>
-						<img class="home-section-heading__ornament" src="<?php echo esc_url( get_stylesheet_directory_uri() . '/images/img-heading.png' ); ?>" width="200" height="68" alt="" aria-hidden="true" decoding="async">
+						<img class="home-section-heading__ornament" src="<?php echo esc_url( caia_ornament_url() ); ?>" width="200" height="68" alt="" aria-hidden="true" decoding="async">
 					<?php endif; ?>
 					<?php if ( $intro ) : ?><p class="home-reviews__intro"><?php echo esc_html( $intro ); ?></p><?php endif; ?>
 				</header>
@@ -618,7 +627,7 @@ function caia_render_home_featured_news( $page_id ) {
 				<header class="home-news__header">
 					<?php if ( $title ) : ?>
 						<h2 class="home-news__heading"><?php echo esc_html( $title ); ?></h2>
-						<img class="home-section-heading__ornament" src="<?php echo esc_url( get_stylesheet_directory_uri() . '/images/img-heading.png' ); ?>" width="200" height="68" alt="" aria-hidden="true" decoding="async">
+						<img class="home-section-heading__ornament" src="<?php echo esc_url( caia_ornament_url() ); ?>" width="200" height="68" alt="" aria-hidden="true" decoding="async">
 					<?php endif; ?>
 					<?php if ( $description ) : ?><p class="home-news__description"><?php echo esc_html( $description ); ?></p><?php endif; ?>
 				</header>

@@ -376,7 +376,7 @@ body.caia-homepage .content {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 7px 16px;
+  padding: 8px 18px;
   border: 1px solid var(--site-primary);
   border-radius: 0;
   color: var(--site-primary);
@@ -539,7 +539,7 @@ body.caia-homepage .content {
   position: absolute;
   top: 50%;
   right: 0;
-  color: rgb(237 101 54 / 22%);
+  color: rgb(136 16 201 / 22%);
   font-size: 180px;
   line-height: 1;
   transform: translateY(-50%);
@@ -858,7 +858,7 @@ body.caia-homepage .content {
   flex: 1;
   flex-direction: column;
   gap: 10px;
-  padding: 10px 16px 16px;
+  padding: 12px 16px 16px;
 }
 .home-products .home-products__price {
   display: flex;
@@ -1249,5 +1249,81 @@ body.caia-homepage .content {
 @media (prefers-reduced-motion: reduce) {
   .home-news__image {
     transition: none;
+  }
+}
+
+/* Product tabs with more than 4 products become a swipeable slider. */
+.home-products__slider {
+  --slide-cols: 4;
+  --slide-gap: 24px;
+  position: relative;
+}
+.home-products__slider.is-slider .home-products__grid {
+  display: grid;
+  grid-template-columns: none;
+  grid-auto-flow: column;
+  grid-auto-columns: calc((100% - (var(--slide-cols) - 1) * var(--slide-gap)) / var(--slide-cols));
+  gap: var(--slide-gap);
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  padding-bottom: 4px;
+}
+.home-products__slider.is-slider .home-products__grid::-webkit-scrollbar {
+  display: none;
+}
+.home-products__slider.is-slider .home-products__card {
+  scroll-snap-align: start;
+}
+.home-products .home-products__arrow {
+  position: absolute;
+  top: 38%;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  color: #fff;
+  background: var(--site-primary);
+  box-shadow: 0 2px 8px rgb(0 0 0 / 22%);
+  cursor: pointer;
+  transform: translateY(-50%);
+  transition: opacity 160ms ease, background 160ms ease;
+}
+.home-products .home-products__arrow:hover:not(:disabled) {
+  background: var(--site-primary-hover);
+}
+.home-products .home-products__arrow:disabled {
+  opacity: 0;
+  pointer-events: none;
+}
+.home-products .home-products__arrow--prev {
+  left: -14px;
+}
+.home-products .home-products__arrow--next {
+  right: -14px;
+}
+@media (max-width: 1023px) {
+  .home-products__slider {
+    --slide-cols: 2;
+    --slide-gap: 16px;
+  }
+  .home-products .home-products__arrow--prev {
+    left: -6px;
+  }
+  .home-products .home-products__arrow--next {
+    right: -6px;
+  }
+}
+
+/* Phones swipe the product slider; no arrow buttons. */
+@media (max-width: 767px) {
+  .home-products .home-products__arrow {
+    display: none;
   }
 }
